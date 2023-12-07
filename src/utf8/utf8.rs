@@ -34,6 +34,7 @@ fn encode_code_point(code_point: u32) -> Vec<u8> {
     let mut byte_vec: Vec<u8> = Vec::new();
 
     if (code_point & 0xFFFFF800) == 0 {
+        println!("Code point: {}", code_point);
         let s = (((code_point >> 6) & 0x1F) | 0xC0) as u8;
         byte_vec.push(s);
     } else if (code_point & 0xFFFF0000) == 0 {
@@ -46,6 +47,7 @@ fn encode_code_point(code_point: u32) -> Vec<u8> {
         byte_vec.push(create_byte(code_point, 12));
         byte_vec.push(create_byte(code_point, 6));
     }
+    byte_vec.push(((code_point & 0x3F) | 0x80) as u8);
     byte_vec
 }
 
@@ -62,6 +64,7 @@ pub fn print_encoding<T: AsRef<Vec<u8>>>(byte_vec: T) {
 
 pub fn utf8_encode<T: AsRef<str>>(s: T) -> Vec<u8> {
     let code_points: Vec<u32> = ucs2::ucs2_decode(s);
+    println!("Code points: {:?}", code_points);
     let len_code_points: usize = code_points.len();
     let mut byte_vec: Vec<u8> = Vec::new();
     for i in 0..len_code_points {
