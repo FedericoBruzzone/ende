@@ -10,10 +10,9 @@ pub fn ucs2_decode<T: AsRef<str>>(s: T) -> Vec<u32> {
     for _ in 0..len {
         let c = iter.next().unwrap();
         if c as u32 >= 0xD800 && c as u32 <= 0xDBFF {
-            let c2 = iter.next().unwrap();
-            if c2 as u32 >= 0xDC00 && c2 as u32 <= 0xDFFF {
-                let extra = ((c as u32 & 0x3FF) << 10) | (c2 as u32 & 0x3FF);
-                v.push(extra + 0x10000);
+            let extra = iter.next().unwrap();
+            if (extra as u32 & 0xFC00) == 0xDC00 {
+                v.push(((c as u32 & 0x3FF) << 10) + (extra as u32 & 0x3FF) + 0x10000);
             } else {
                 panic!("Invalid UCS-2 sequence");
             }
@@ -29,9 +28,9 @@ pub fn ucs2_encode<T: AsRef<str>>(s: T) -> Vec<u16> {
         .chars()
         .flat_map(|c| {
             if c as u32 > 0xFFFF {
-                let extra = c as u32 - 0x10000;
-                let first = (extra >> 10) & 0x3FF | 0xD800;
-                let second = (extra & 0x3FF) | 0xDC00;
+                let extra: u32 = c as u32 - 0x10000;
+                let first: u32 = (extra >> 10) & 0x3FF | 0xD800;
+                let second: u32 = (extra & 0x3FF) | 0xDC00;
                 vec![first as u16, second as u16]
             } else {
                 vec![c as u16]
