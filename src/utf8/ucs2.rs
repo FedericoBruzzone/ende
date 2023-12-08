@@ -1,10 +1,13 @@
-// UCS-2 is a character encoding standard in which characters are represented
-// by a fixed-length 16 bits (2 bytes).
-// UCS-2 represents a possible maximum of 65,536 characters,
-// or in hexadecimals from 0000h - FFFFh (2 bytes).
+// UCS-2 (Universal Character Set 2) is a character encoding that represents each
+// character in the Unicode character set with a fixed-size 16-bit code unit.
+// It's important to note that UCS-2 is limited to the Basic Multilingual Plane
+// (BMP) of Unicode, which includes character codes from U+0000 to U+FFFF.
+// Characters outside this range require more than 16 bits and are represented
+// using UTF-16 instead.
 
 use std::str;
 
+/// Decodes a UCS-2 string into a vector of code points.
 pub fn ucs2_decode<T: AsRef<str>>(s: T) -> Vec<u32> {
     let mut v: Vec<u32> = Vec::new();
     let mut iter: str::Chars = s.as_ref().chars();
@@ -25,6 +28,18 @@ pub fn ucs2_decode<T: AsRef<str>>(s: T) -> Vec<u32> {
     v
 }
 
-pub fn ucs2_encode<T: AsRef<Vec<u32>>>(_v: T) -> String {
-    "".to_string()
+/// Encodes a UTF-8 byte vector into a UCS-2 string.
+pub fn ucs2_encode<T: AsRef<Vec<u32>>>(v: T) -> String {
+    let mut s: String = String::new();
+    let v: Vec<u32> = v.as_ref().to_vec();
+    for i in 0..v.len() {
+        let mut code_point = v[i];
+        if code_point > 0xFFFF {
+            let extra = code_point - 0x10000;
+            s.push((((extra >> 10) & 0x3FF) + 0xD800) as u8 as char);
+            code_point = 0xDC00 | code_point & 0x3FF;
+        }
+        s.push(code_point as u8 as char);
+    }
+    s
 }

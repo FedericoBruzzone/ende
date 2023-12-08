@@ -124,6 +124,7 @@ pub fn print_encoding<T: AsRef<Vec<u8>>>(byte_vec: T) {
     println!("In binary:      {:?}", binary_repr);
 }
 
+/// Encodes a UCS-2 string into a UTF-8 byte vector.
 pub fn utf8_encode<T: AsRef<str>>(s: T) -> Vec<u8> {
     let code_points: Vec<u32> = ucs2::ucs2_decode(s);
     let len_code_points: usize = code_points.len();
@@ -135,6 +136,7 @@ pub fn utf8_encode<T: AsRef<str>>(s: T) -> Vec<u8> {
     byte_vec
 }
 
+/// Decodes a UTF-8 byte vector into a UCS-2 string.
 pub fn utf8_decode<T: AsRef<Vec<u8>>>(v: T) -> String {
     let byte_string: String = vec_to_bytestring(v.as_ref());
     let byte_vec: Vec<u32> = ucs2::ucs2_decode(byte_string);
@@ -143,7 +145,6 @@ pub fn utf8_decode<T: AsRef<Vec<u8>>>(v: T) -> String {
     let mut i: usize = 0;
     while i < byte_vec.len() {
         let (code_point, offset) = decode_symbol_starting_from(&byte_vec, i).unwrap();
-        println!("code_point: {} offset: {}", code_point, offset);
         i += offset;
         code_points.push(code_point);
     }
