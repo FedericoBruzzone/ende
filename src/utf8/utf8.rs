@@ -1,18 +1,11 @@
 // use crate::utf8::ucs2;
 use crate::prelude::*;
 
-use std::io;
 use std::u8;
 use std::usize;
 
-fn vec_to_bytes(vec: &Vec<u8>) -> io::Result<Vec<u8>> {
-    let mut buffer = Vec::with_capacity(vec.len());
-    unsafe {
-        let ptr = vec.as_ptr() as *const u8;
-        std::ptr::copy_nonoverlapping(ptr, buffer.as_mut_ptr(), buffer.capacity());
-        buffer.set_len(buffer.capacity());
-    }
-    Ok(buffer)
+fn vec_to_bytestring(vec: &Vec<u8>) -> String {
+    vec.into_iter().map(|b| *b as char).collect()
 }
 
 fn create_byte(code_point: u32, shift: u32) -> u8 {
@@ -34,7 +27,6 @@ fn encode_code_point(code_point: u32) -> Vec<u8> {
     let mut byte_vec: Vec<u8> = Vec::new();
 
     if (code_point & 0xFFFFF800) == 0 {
-        println!("Code point: {}", code_point);
         let s = (((code_point >> 6) & 0x1F) | 0xC0) as u8;
         byte_vec.push(s);
     } else if (code_point & 0xFFFF0000) == 0 {
@@ -51,6 +43,77 @@ fn encode_code_point(code_point: u32) -> Vec<u8> {
     byte_vec
 }
 
+fn read_next_byte(byte_vec: &Vec<u32>, i: usize) -> u32 {
+    if i >= byte_vec.len() {
+        panic!("Index out of bounds");
+    }
+    let continuation_byte: u32 = byte_vec[i] & 0xFF;
+    if (continuation_byte & 0xC0) == 0x80 {
+        return continuation_byte & 0x3F;
+    }
+    panic!("Invalid continuation byte");
+}
+
+fn decode_symbol_starting_from(byte_vec: &Vec<u32>, i: usize) -> Option<(u32, usize)> {
+    if i > byte_vec.len() {
+        panic!("Index out of bounds");
+    }
+
+    if i == byte_vec.len() {
+        return None;
+    }
+
+    let mut code_point: u32;
+    let mut offset: usize = 0;
+
+    let byte1: u32 = byte_vec[i] & 0xFF;
+    code_point = byte1;
+    offset += 1;
+    if (byte1 & 0x80) == 0 {
+        return Some((code_point, offset));
+    }
+
+    if (byte1 & 0xE0) == 0xC0 {
+        let byte2: u32 = read_next_byte(byte_vec, i + offset);
+        code_point = ((byte1 & 0x1F) << 6) | byte2;
+        offset += 1;
+        if code_point >= 0x80 {
+            return Some((code_point, offset));
+        } else {
+            panic!("Invalid continuation byte");
+        }
+    }
+
+    if (byte1 & 0xF0) == 0xE0 {
+        let byte2: u32 = read_next_byte(byte_vec, i + offset);
+        offset += 1;
+        let byte3: u32 = read_next_byte(byte_vec, i + offset);
+        offset += 1;
+        code_point = ((byte1 & 0x0F) << 12) | (byte2 << 6) | byte3;
+        if code_point >= 0x0800 {
+            check_code_point(code_point);
+            return Some((code_point, offset));
+        } else {
+            panic!("Invalid continuation byte");
+        }
+    }
+
+    if (byte1 & 0xF8) == 0xF0 {
+        let byte2: u32 = read_next_byte(byte_vec, i + offset);
+        offset += 1;
+        let byte3: u32 = read_next_byte(byte_vec, i + offset);
+        offset += 1;
+        let byte4: u32 = read_next_byte(byte_vec, i + offset);
+        offset += 1;
+        code_point = ((byte1 & 0x07) << 0x12) | (byte2 << 0x0C) | (byte3 << 0x06) | byte4;
+        if code_point >= 0x010000 && code_point <= 0x10FFFF {
+            return Some((code_point, offset));
+        }
+    }
+
+    panic!("Invalid UTF-8 sequence");
+}
+
 // ========================= Public API =========================
 
 pub fn print_encoding<T: AsRef<Vec<u8>>>(byte_vec: T) {
@@ -59,18 +122,31 @@ pub fn print_encoding<T: AsRef<Vec<u8>>>(byte_vec: T) {
     println!("In decimal:     {:?}", byte_vec);
     println!("In hexadecimal: {:x?}", byte_vec);
     println!("In binary:      {:?}", binary_repr);
-
 }
 
 pub fn utf8_encode<T: AsRef<str>>(s: T) -> Vec<u8> {
     let code_points: Vec<u32> = ucs2::ucs2_decode(s);
-    println!("Code points: {:?}", code_points);
     let len_code_points: usize = code_points.len();
     let mut byte_vec: Vec<u8> = Vec::new();
     for i in 0..len_code_points {
         let code_point: u32 = code_points[i];
         byte_vec.append(&mut encode_code_point(code_point));
     }
-    vec_to_bytes(&byte_vec).unwrap()
+    byte_vec
 }
 
+pub fn utf8_decode<T: AsRef<Vec<u8>>>(v: T) -> String {
+    let byte_string: String = vec_to_bytestring(v.as_ref());
+    let byte_vec: Vec<u32> = ucs2::ucs2_decode(byte_string);
+    let mut code_points: Vec<u32> = Vec::new();
+
+    let mut i: usize = 0;
+    while i < byte_vec.len() {
+        let (code_point, offset) = decode_symbol_starting_from(&byte_vec, i).unwrap();
+        println!("code_point: {} offset: {}", code_point, offset);
+        i += offset;
+        code_points.push(code_point);
+    }
+
+    ucs2::ucs2_encode(code_points)
+}

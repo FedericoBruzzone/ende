@@ -3,9 +3,11 @@
 // UCS-2 represents a possible maximum of 65,536 characters,
 // or in hexadecimals from 0000h - FFFFh (2 bytes).
 
+use std::str;
+
 pub fn ucs2_decode<T: AsRef<str>>(s: T) -> Vec<u32> {
     let mut v: Vec<u32> = Vec::new();
-    let mut iter = s.as_ref().chars();
+    let mut iter: str::Chars = s.as_ref().chars();
     let len = iter.clone().count();
     for _ in 0..len {
         let c = iter.next().unwrap();
@@ -23,18 +25,6 @@ pub fn ucs2_decode<T: AsRef<str>>(s: T) -> Vec<u32> {
     v
 }
 
-// pub fn ucs2_encode<T: AsRef<str>>(s: T) -> Vec<u16> {
-//     s.as_ref()
-//         .chars()
-//         .flat_map(|c| {
-//             if c as u32 > 0xFFFF {
-//                 let extra: u32 = c as u32 - 0x10000;
-//                 let first: u32 = (extra >> 10) & 0x3FF | 0xD800;
-//                 let second: u32 = (extra & 0x3FF) | 0xDC00;
-//                 vec![first as u16, second as u16]
-//             } else {
-//                 vec![c as u16]
-//             }
-//         })
-//         .collect::<Vec<u16>>()
-// }
+pub fn ucs2_encode<T: AsRef<Vec<u32>>>(_v: T) -> String {
+    "".to_string()
+}
