@@ -1,3 +1,45 @@
+/*!
+UTF-8 encoding and decoding.
+
+# Encoding
+A unicode code point is represented using one to four bytes in UTF-8, depending on its value.
+* If the unicode code point is in the range `0x0000` to `0x007F`, it is represented using [one byte](#one-byte).
+* If the unicode code point is in the range `0x0080` to `0x07FF`, it is represented using [two bytes](#two-bytes).
+* If the unicode code point is in the range `0x0800` to `0xFFFF`, it is represented using [three bytes](#three-bytes).
+* If the unicode code point is in the range `0x10000` to `0x10FFFF`, it is represented using [four bytes](#four-bytes).
+
+**Note**: The number of `x`s (bits) on the right side of the `0` in the unicode code point are the number
+of free bits on the UTF-8 code point.
+
+### One byte
+
+If the eighth bit of the unicode code point is 0, the unicode code point is represented using one byte.
+
+* Unicode code point: `xxxxxxxx|xxxxxxxx|xxxxxxxx|0xxxxxxx`
+* UTF-8 code point: `0xxxxxxx`
+
+### Two bytes
+
+If the twelfth bit of the unicode code point is 0, the unicode code point is represented using two bytes.
+
+* Unicode code point: `xxxxxxxx|xxxxxxxx|xxxx0xxx|xxxxxxxx`
+* UTF-8 code point: `110xxxxx|10xxxxxx`
+
+### Three bytes
+
+If the seventeenth bit of the unicode code point is 0, the unicode code point is represented using three bytes.
+
+* Unicode code point: `xxxxxxxx|xxxxxxx0|xxxxxxxx|xxxxxxxx`
+* UTF-8 code point: `1110xxxx|10xxxxxx|10xxxxxx`
+
+### Four bytes
+
+If the twentysecond bit of the unicode code point is 0, the unicode code point is represented using four bytes.
+
+* Unicode code point: `xxxxxxxx|xx0xxxxx|xxxxxxxx|xxxxxxxx`
+* UTF-8 code point: `11110xxx|10xxxxxx|10xxxxxx|10xxxxxx`
+*/
+
 // use crate::utf8::ucs2;
 // use crate::prelude::*;
 
@@ -7,27 +49,38 @@ fn check_code_point(code_point: u32) {
     }
 }
 
-fn encode_code_point(code_point: u32) -> Vec<u8> {
-    if (code_point & 0xFFFFFF80) == 0 {
-        return vec![code_point as u8];
+/// Encode a unicode code point into a vector of UTF-8 code points.
+///
+/// # Parameters
+/// * `code_point`: [`u32`] - A unicode code point.
+///
+/// # Returns
+/// A [`Vec<u8>`] containing the UTF-8 code points.
+///
+/// # Panics
+/// * If the input unicode code point is invalid.
+fn encode_code_point(unicode_cp: u32) -> Vec<u8> {
+    if (unicode_cp & 0xFFFFFF80) == 0 {
+        return vec![unicode_cp as u8];
     }
+
     let mut byte_vec: Vec<u8> = Vec::new();
-
-    if (code_point & 0xFFFFF800) == 0 {
-        let s = (((code_point >> 6) & 0x1F) | 0xC0) as u8;
+    // Check if the code point is representable using two bytes in UTF-8.
+    // If so, it is in the range 0x0080 to 0x07FF.
+    if (unicode_cp & 0xFFFFF800) == 0 {
+        let s = (((unicode_cp >> 6) & 0x1F) | 0xC0) as u8;
         byte_vec.push(s);
-    } else if (code_point & 0xFFFF0000) == 0 {
-        check_code_point(code_point);
-        let s = (((code_point >> 12) & 0x0F) | 0xE0) as u8;
+    } else if (unicode_cp & 0xFFFF0000) == 0 {
+        check_code_point(unicode_cp);
+        let s = (((unicode_cp >> 12) & 0x0F) | 0xE0) as u8;
         byte_vec.push(s);
-    } else if (code_point & 0xFFE00000) == 0 {
-        let s = (((code_point >> 18) & 0x07) | 0xF0) as u8;
+    } else if (unicode_cp & 0xFFE00000) == 0 {
+        let s = (((unicode_cp >> 18) & 0x07) | 0xF0) as u8;
         byte_vec.push(s);
-        byte_vec.push((((code_point >> 12) & 0x3F) | 0x80) as u8); // Create a continuation byte
-        byte_vec.push((((code_point >> 6) & 0x3F) | 0x80) as u8); // Create a continuation byte
-
+        byte_vec.push((((unicode_cp >> 12) & 0x3F) | 0x80) as u8); // Create a continuation byte
+        byte_vec.push((((unicode_cp >> 6) & 0x3F) | 0x80) as u8); // Create a continuation byte
     }
-    byte_vec.push(((code_point & 0x3F) | 0x80) as u8);
+    byte_vec.push(((unicode_cp & 0x3F) | 0x80) as u8);
     byte_vec
 }
 
@@ -42,7 +95,7 @@ fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
     panic!("Invalid continuation byte");
 }
 
-fn decode_symbol_starting_from(byte_vec: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
+fn decode_symbol(byte_vec: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     if i > byte_vec.len() {
         panic!("Index out of bounds");
     }
@@ -115,13 +168,20 @@ fn print_utf8_vec<T: AsRef<Vec<u8>>>(utf8_cp: T, binary_flag: bool) {
     let string_repr: String = String::from_utf8(v.clone()).unwrap();
     let binary_repr: Vec<String> = v.iter().map(|x| format!("{:08b}", x)).collect();
     println!();
-    println!("--------------- UTF-8 encoding of \"{}\" ---------------", string_repr);
+    println!(
+        "--------------- UTF-8 encoding of \"{}\" ---------------",
+        string_repr
+    );
     println!("Hex: {:x?}", v);
     if binary_flag {
         println!("Bin: {:?}", binary_repr);
     }
     println!("Dec: {:?}", v);
-    println!("{}{}", "-".repeat(52), "-".repeat(string_repr.chars().count()));
+    println!(
+        "{}{}",
+        "-".repeat(52),
+        "-".repeat(string_repr.chars().count())
+    );
     println!();
 }
 
@@ -149,7 +209,7 @@ fn print_utf8_vec<T: AsRef<Vec<u8>>>(utf8_cp: T, binary_flag: bool) {
 /// Dec: [240, 144, 128, 129]
 /// ----------------------------------------------------
 pub fn print_utf8<T: AsRef<Vec<u8>>>(uft8_cp: T) {
-   print_utf8_vec(uft8_cp, false);
+    print_utf8_vec(uft8_cp, false);
 }
 
 /// Pretty print the UTF-8 encoding in hexadecimal, binary and decimal of a vector of UTF-8 code points.
@@ -201,7 +261,7 @@ pub fn encode_in_utf8<T: AsRef<Vec<u32>>>(unicode_cp: T) -> Vec<u8> {
         let cp: u32 = unicode_cp[i];
         utf8_cp.append(&mut encode_code_point(cp));
     }
-   utf8_cp
+    utf8_cp
 }
 
 /// Decode a vector of UTF-8 code points into a vector of unicode code points.
@@ -228,10 +288,9 @@ pub fn decode_from_utf8<T: AsRef<Vec<u8>>>(utf8_cp: T) -> Vec<u32> {
     let mut code_points: Vec<u32> = Vec::new();
     let mut i: usize = 0;
     while i < v.len() {
-        let (code_point, offset) = decode_symbol_starting_from(&v, i).unwrap();
+        let (code_point, offset) = decode_symbol(&v, i).unwrap();
         i += offset;
         code_points.push(code_point);
     }
     code_points
 }
-
