@@ -34,7 +34,7 @@ fn encode_code_point(code_point: u32) -> Vec<u8> {
         let s = (((code_point >> 12) & 0x0F) | 0xE0) as u8;
         byte_vec.push(s);
     } else if (code_point & 0xFFE00000) == 0 {
-        let s = (((code_point >> 12) & 0x0F) | 0xE0) as u8;
+        let s = (((code_point >> 18) & 0x07) | 0xF0) as u8;
         byte_vec.push(s);
         byte_vec.push(create_byte(code_point, 12));
         byte_vec.push(create_byte(code_point, 6));
@@ -43,18 +43,18 @@ fn encode_code_point(code_point: u32) -> Vec<u8> {
     byte_vec
 }
 
-fn read_next_byte(byte_vec: &Vec<u32>, i: usize) -> u32 {
+fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
     if i >= byte_vec.len() {
         panic!("Index out of bounds");
     }
-    let continuation_byte: u32 = byte_vec[i] & 0xFF;
+    let continuation_byte: u32 = (byte_vec[i] & 0xFF) as u32;
     if (continuation_byte & 0xC0) == 0x80 {
         return continuation_byte & 0x3F;
     }
     panic!("Invalid continuation byte");
 }
 
-fn decode_symbol_starting_from(byte_vec: &Vec<u32>, i: usize) -> Option<(u32, usize)> {
+fn decode_symbol_starting_from(byte_vec: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     if i > byte_vec.len() {
         panic!("Index out of bounds");
     }
@@ -66,7 +66,7 @@ fn decode_symbol_starting_from(byte_vec: &Vec<u32>, i: usize) -> Option<(u32, us
     let mut code_point: u32;
     let mut offset: usize = 0;
 
-    let byte1: u32 = byte_vec[i] & 0xFF;
+    let byte1: u32 = (byte_vec[i] & 0xFF) as u32;
     code_point = byte1;
     offset += 1;
     if (byte1 & 0x80) == 0 {
@@ -124,9 +124,9 @@ pub fn print_encoding<T: AsRef<Vec<u8>>>(byte_vec: T) {
     println!("In binary:      {:?}", binary_repr);
 }
 
-/// Encodes a UCS-2 string into a UTF-8 byte vector.
-pub fn utf8_encode<T: AsRef<str>>(s: T) -> Vec<u8> {
-    let code_points: Vec<u32> = ucs2::ucs2_decode(s);
+// Assuming that the vector v contains only valid UCS-2 code points
+pub fn utf8_encode<T: AsRef<Vec<u32>>>(v: T) -> Vec<u8> {
+    let code_points: Vec<u32> = v.as_ref().to_vec();
     let len_code_points: usize = code_points.len();
     let mut byte_vec: Vec<u8> = Vec::new();
     for i in 0..len_code_points {
@@ -136,18 +136,29 @@ pub fn utf8_encode<T: AsRef<str>>(s: T) -> Vec<u8> {
     byte_vec
 }
 
-/// Decodes a UTF-8 byte vector into a UCS-2 string.
-pub fn utf8_decode<T: AsRef<Vec<u8>>>(v: T) -> String {
-    let byte_string: String = vec_to_bytestring(v.as_ref());
-    let byte_vec: Vec<u32> = ucs2::ucs2_decode(byte_string);
-    let mut code_points: Vec<u32> = Vec::new();
+// pub fn utf8_decode<T: AsRef<Vec<u8>>>(v: T) -> String {
+//     let byte_string: String = vec_to_bytestring(v.as_ref());
+//     let byte_vec: Vec<u32> = ucs2::ucs2_decode(byte_string);
+//     let mut code_points: Vec<u32> = Vec::new();
+//     let mut i: usize = 0;
+//     while i < byte_vec.len() {
+//         let (code_point, offset) = decode_symbol_starting_from(&byte_vec, i).unwrap();
+//         i += offset;
+//         code_points.push(code_point);
+//     }
+//     ucs2::ucs2_encode(code_points)
+// }
 
+// Assuming that the vector v contains only valid UTF-8 code points
+pub fn utf8_decode<T: AsRef<Vec<u8>>>(v: T) -> Vec<u32> {
+    let byte_vec = v.as_ref();
+    let mut code_points: Vec<u32> = Vec::new();
     let mut i: usize = 0;
     while i < byte_vec.len() {
         let (code_point, offset) = decode_symbol_starting_from(&byte_vec, i).unwrap();
         i += offset;
         code_points.push(code_point);
     }
-
-    ucs2::ucs2_encode(code_points)
+    code_points
 }
+
