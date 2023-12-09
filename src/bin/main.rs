@@ -2,35 +2,45 @@ use encdec::prelude::*;
 
 // cargo run --bin main
 fn main() {
-
     // let s2: String = "\xa9".to_string();
     // print!("s2: {:x?}\n", s2.as_bytes());
 
     // let v: Vec<u32> = vec![0xa9, 0xffff, 0x10451]; // Array of code point
-    let v: Vec<u32> = vec![0xa9]; // Array of code point
-    println!("v: {:?}", v);
-    println!("v: {:x?}", v);
-    let tmp = utf8::utf8_encode(&v);
-    println!("tmp: {:x?}", tmp);
+    // let v: Vec<u32> = vec![0xa9]; // Array of code point
+    // // println!("v: {:?}", v);
+    // // println!("v: {:x?}", v);
+    // let enc_utf8 = utf8::utf8_encode(&v);
+    // println!("encoded utf-8: {:x?}", enc_utf8);
+    // let enc_ucs2 = ucs2::ucs2_encode(&v);
+    // println!("encoded ucs-2: {:x?}", enc_ucs2);
+    // let dec = utf8::utf8_decode(&enc_utf8);
+    // println!("UNICODE code point: {:x?}", dec);
 
-    let v: Vec<u32> = vec![0x10001]; // Array of code point
-    println!("v: {:?}", v);
-    println!("v: {:x?}", v);
-    let tmp = utf8::utf8_encode(&v);
-    println!("encoded utf-8: {:x?}", tmp);
-    assert_eq!(tmp, vec![0xf0, 0x90, 0x80, 0x81]);
+    let v: Vec<u32> = vec![0x10001]; // Array of code point in unicode
+    let utf8_vec = utf8::encode_in_utf8(&v);
+    // println!("v encoded utf-8: {:x?}", utf8_vec);
+    let enc_ucs2 = ucs2::ucs2_encode(&v);
+    // println!("v encoded ucs-2: {:x?}", enc_ucs2);
+    let unicode_vec_from_ucs2 = ucs2::ucs2_decode(&enc_ucs2);
+    // println!("UNICODE code point from ucs-2: {:x?}", unicode_vec_from_ucs2);
+    let unicode_vec_from_utf8 = utf8::decode_from_utf8(&utf8_vec);
+    // println!("UNICODE code point from utf-8: {:x?}", unicode_vec_from_utf8);
+    utf8::print_utf8(&utf8_vec);
+    utf8::print_utf8_b(&utf8_vec);
 
-    let decoded = utf8::utf8_decode(&tmp);
-    println!("decoded ucs-2: {:x?}", decoded);
 
-    let s_test = "💖";
-    let a = [0xf0, 0x9f, 0x92, 0x96]; // Valid UTF-8 sequence of code points
-    println!("s_test: {:x?}", s_test.as_bytes());
-    println!("a: {:?}", String::from_utf8(a.to_vec()).unwrap());
+    // let v2: Vec<u32> = vec![0x10001, 0x10002]; // Array of code point in unicode
+    // let enc2 = utf8::encode_in_utf8(&v2);
+    // utf8::print_utf8(&enc2);
+    // unicode::print_unicode(&v2);
+
+    // let s_test = "💖";
+    // let a = [0xf0, 0x9f, 0x92, 0x96]; // Valid UTF-8 sequence of code points
+    // println!("s_test: {:x?}", s_test.as_bytes());
+    // println!("a: {:?}", String::from_utf8(a.to_vec()).unwrap());
 
     // let s: String = "©".to_string();
     // print!("s: {:x?}\n", s.as_bytes());
     // let res: Vec<u8> = utf8::utf8_encode(&s);
     // println!("res: {:x?}", res);
-
 }

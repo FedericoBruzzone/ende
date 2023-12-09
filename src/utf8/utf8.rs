@@ -1,18 +1,5 @@
 // use crate::utf8::ucs2;
-use crate::prelude::*;
-
-use std::u8;
-use std::usize;
-
-fn vec_to_bytestring(vec: &Vec<u8>) -> String {
-    vec.into_iter().map(|b| *b as char).collect()
-}
-
-fn create_byte(code_point: u32, shift: u32) -> u8 {
-    let mut byte: u8 = ((code_point >> shift) & 0x3F) as u8;
-    byte |= 0x80;
-    byte
-}
+// use crate::prelude::*;
 
 fn check_code_point(code_point: u32) {
     if code_point >= 0xD800 && code_point <= 0xDFFF {
@@ -36,8 +23,9 @@ fn encode_code_point(code_point: u32) -> Vec<u8> {
     } else if (code_point & 0xFFE00000) == 0 {
         let s = (((code_point >> 18) & 0x07) | 0xF0) as u8;
         byte_vec.push(s);
-        byte_vec.push(create_byte(code_point, 12));
-        byte_vec.push(create_byte(code_point, 6));
+        byte_vec.push((((code_point >> 12) & 0x3F) | 0x80) as u8); // Create a continuation byte
+        byte_vec.push((((code_point >> 6) & 0x3F) | 0x80) as u8); // Create a continuation byte
+
     }
     byte_vec.push(((code_point & 0x3F) | 0x80) as u8);
     byte_vec
@@ -114,48 +102,133 @@ fn decode_symbol_starting_from(byte_vec: &Vec<u8>, i: usize) -> Option<(u32, usi
     panic!("Invalid UTF-8 sequence");
 }
 
-// ========================= Public API =========================
-
-pub fn print_encoding<T: AsRef<Vec<u8>>>(byte_vec: T) {
-    let byte_vec: Vec<u8> = byte_vec.as_ref().to_vec();
-    let binary_repr: Vec<String> = byte_vec.iter().map(|x| format!("{:08b}", x)).collect();
-    println!("In decimal:     {:?}", byte_vec);
-    println!("In hexadecimal: {:x?}", byte_vec);
-    println!("In binary:      {:?}", binary_repr);
-}
-
-// Assuming that the vector v contains only valid UCS-2 code points
-pub fn utf8_encode<T: AsRef<Vec<u32>>>(v: T) -> Vec<u8> {
-    let code_points: Vec<u32> = v.as_ref().to_vec();
-    let len_code_points: usize = code_points.len();
-    let mut byte_vec: Vec<u8> = Vec::new();
-    for i in 0..len_code_points {
-        let code_point: u32 = code_points[i];
-        byte_vec.append(&mut encode_code_point(code_point));
+/// Pretty print the unicode code points in hexadecimal, (binary) and decimal of a vector of unicode code points.
+///
+/// # Parameters
+/// * `unicode_cp`: [`Vec<u32>`] - A vector of unicode code points.
+/// * `binary_flag`: [`bool`] - A flag to print the binary representation of the unicode code points.
+///
+/// # Note
+/// The bytes printed in hexadecimal are code points in unicode.
+fn print_utf8_vec<T: AsRef<Vec<u8>>>(utf8_cp: T, binary_flag: bool) {
+    let v: Vec<u8> = utf8_cp.as_ref().to_vec();
+    let string_repr: String = String::from_utf8(v.clone()).unwrap();
+    let binary_repr: Vec<String> = v.iter().map(|x| format!("{:08b}", x)).collect();
+    println!();
+    println!("--------------- UTF-8 encoding of \"{}\" ---------------", string_repr);
+    println!("Hex: {:x?}", v);
+    if binary_flag {
+        println!("Bin: {:?}", binary_repr);
     }
-    byte_vec
+    println!("Dec: {:?}", v);
+    println!("{}{}", "-".repeat(52), "-".repeat(string_repr.chars().count()));
+    println!();
 }
 
-// pub fn utf8_decode<T: AsRef<Vec<u8>>>(v: T) -> String {
-//     let byte_string: String = vec_to_bytestring(v.as_ref());
-//     let byte_vec: Vec<u32> = ucs2::ucs2_decode(byte_string);
-//     let mut code_points: Vec<u32> = Vec::new();
-//     let mut i: usize = 0;
-//     while i < byte_vec.len() {
-//         let (code_point, offset) = decode_symbol_starting_from(&byte_vec, i).unwrap();
-//         i += offset;
-//         code_points.push(code_point);
-//     }
-//     ucs2::ucs2_encode(code_points)
-// }
+// ============================================================================
+// ================================ Public API ================================
+// ============================================================================
 
-// Assuming that the vector v contains only valid UTF-8 code points
-pub fn utf8_decode<T: AsRef<Vec<u8>>>(v: T) -> Vec<u32> {
-    let byte_vec = v.as_ref();
+/// Pretty print the UTF-8 encoding in hexadecimal and decimal of a vector of UTF-8 code points.
+///
+/// # Parameters
+/// * `uft8_cp`: [`Vec<u8>`] - A vector of UTF-8 code points.
+///
+/// # Note
+/// The bytes printed in hexadecimal are code points in UTF-8.
+///
+/// # Example
+/// ```rust
+/// let v: Vec<u8> = vec![0xf0, 0x90, 0x80, 0x81];
+/// utf8::print_utf8(&v);
+/// ```
+/// **Output**
+/// ```text
+/// --------------- UTF-8 encoding of "𐀁" ---------------
+/// Hex: [f0, 90, 80, 81]
+/// Dec: [240, 144, 128, 129]
+/// ----------------------------------------------------
+pub fn print_utf8<T: AsRef<Vec<u8>>>(uft8_cp: T) {
+   print_utf8_vec(uft8_cp, false);
+}
+
+/// Pretty print the UTF-8 encoding in hexadecimal, binary and decimal of a vector of UTF-8 code points.
+///
+/// # Parameters
+/// * `uft8_cp`: [`Vec<u8>`] - A vector of UTF-8 code points.
+///
+/// # Note
+/// The bytes printed in hexadecimal are code points in UTF-8.
+///
+/// # Example1
+/// ```rust
+/// let v: Vec<u8> = vec![0xf0, 0x90, 0x80, 0x81];
+/// utf8::print_utf8_b(&v);
+/// ```
+/// **Output**
+/// ```text
+/// --------------- UTF-8 encoding of "𐀁" ---------------
+/// Hex: [f0, 90, 80, 81]
+/// Bin: ["11110000", "10010000", "10000000", "10000001"]
+/// Dec: [240, 144, 128, 129]
+/// -----------------------------------------------------
+pub fn print_utf8_b<T: AsRef<Vec<u8>>>(uft8_cp: T) {
+    print_utf8_vec(uft8_cp, true);
+}
+
+/// Encode a vector of unicode code points into a vector of UTF-8 code points.
+///
+/// # Parameters
+/// * `unicode_cp`: [`Vec<u32>`] - A vector of unicode code points.
+///
+/// # Returns
+/// A [`Vec<u8>`] containing the UTF-8 code points.
+///
+/// # Panics
+/// * If the input vector (`unicode_cp`) of unicode code points contains invalid unicode code points.
+///
+/// # Example
+/// ```rust
+/// let v: Vec<u32> = vec![0x10001]; // Array of code points in unicode
+/// let enc: Vec<u8> = utf8::encode_in_utf8(&v);
+/// assert_eq!(enc, vec![0xf0, 0x90, 0x80, 0x81]);
+/// ```
+pub fn encode_in_utf8<T: AsRef<Vec<u32>>>(unicode_cp: T) -> Vec<u8> {
+    let unicode_cp: Vec<u32> = unicode_cp.as_ref().to_vec();
+    let len: usize = unicode_cp.len();
+    let mut utf8_cp: Vec<u8> = Vec::new();
+    for i in 0..len {
+        let cp: u32 = unicode_cp[i];
+        utf8_cp.append(&mut encode_code_point(cp));
+    }
+   utf8_cp
+}
+
+/// Decode a vector of UTF-8 code points into a vector of unicode code points.
+///
+/// # Parameters
+/// * `utf8_cp`: [`Vec<u8>`] - A vector of UTF-8 code points.
+///
+/// # Returns
+/// A [`Vec<u32>`] containing the unicode code points.
+///
+/// # Panics
+/// * If the input vector (`utf8_cp`) of UTF-8 code points contains invalid code points.
+/// * If the input vector (`utf8_cp`) of UTF-8 code points contains invalid continuation bytes.
+/// * If the input vector (`utf8_cp`) of UTF-8 code points contains invalid UTF-8 sequences.
+///
+/// # Example
+/// ```rust
+/// let v: Vec<u8> = vec![0xf0, 0x90, 0x80, 0x81]; // Array of code points in UTF-8
+/// let dec: Vec<u32> = utf8::decode_form_utf8(&v);
+/// assert_eq!(dec, vec![0x10001]);
+/// ```
+pub fn decode_from_utf8<T: AsRef<Vec<u8>>>(utf8_cp: T) -> Vec<u32> {
+    let v = utf8_cp.as_ref();
     let mut code_points: Vec<u32> = Vec::new();
     let mut i: usize = 0;
-    while i < byte_vec.len() {
-        let (code_point, offset) = decode_symbol_starting_from(&byte_vec, i).unwrap();
+    while i < v.len() {
+        let (code_point, offset) = decode_symbol_starting_from(&v, i).unwrap();
         i += offset;
         code_points.push(code_point);
     }
