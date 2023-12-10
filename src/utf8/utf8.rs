@@ -8,68 +8,62 @@ A unicode code point is represented using one to four bytes in UTF-8, depending 
 * If the unicode code point is in the range `0x0800` to `0xFFFF`, it is represented using [three bytes](#three-bytes).
 * If the unicode code point is in the range `0x10000` to `0x10FFFF`, it is represented using [four bytes](#four-bytes).
 
-**Note**: The number of `x`s (bits) on the right side of the `0` in the unicode code point are the number
-of free bits on the UTF-8 code point.
+# Decoding
+A UTF-8 code point is decoded into a unicode code point using the following rules.
+* If the first bit of the UTF-8 code point is 0, the unicode code point is represented using [one byte](#one-byte).
+* If the first three bits of the UTF-8 code point are 110, the unicode code point is represented using [two bytes](#two-bytes).
+* If the first four bits of the UTF-8 code point are 1110, the unicode code point is represented using [three bytes](#three-bytes).
+* If the first five bits of the UTF-8 code point are 11110, the unicode code point is represented using [four bytes](#four-bytes).
+
+When a unicode code point is represented using two, three or four bytes, the remaining bits of the UTF-8 code point are continuation bytes. The continuation bytes start with the bit pattern `10`.
+
+## Rrepresentation
+
+**Note**:
+
+* UTF-8 is a prefix code, which means that no UTF-8 code point is a prefix of another UTF-8 code point. This means that the first byte of a UTF-8 code point is enough to determine the length of the UTF-8 code point and decode it in an unambiguous way.
+* The number of `x`s on the right side of the `0` in the unicode code point are the number of free bits on the UTF-8 code point.
 
 ### One byte
 
-If the eighth bit of the unicode code point is 0, the unicode code point is represented using one byte.
+**Encoding**: If the eighth bit of the unicode code point is 0, the unicode code point is represented in UTF-8 using one byte.
+
+**Decoding**: If the UTF-8 code point starts with a 0, the unicode code point is represented using only the first eight least significant bits.
 
 * Unicode code point: `xxxxxxxx|xxxxxxxx|xxxxxxxx|0xxxxxxx`
 * UTF-8 code point: `0xxxxxxx`
 
 ### Two bytes
 
-If the twelfth bit of the unicode code point is 0, the unicode code point is represented using two bytes.
+**Encoding**: If the twelfth bit of the unicode code point is 0, the unicode code point is represented in UTF-8 using two bytes.
+
+**Decoding**: If the UTF-8 code point starts with `110` it has only one continuation byte, and the unicode code point is represented using the first eleven least significant bits.
 
 * Unicode code point: `xxxxxxxx|xxxxxxxx|xxxx0xxx|xxxxxxxx`
 * UTF-8 code point: `110xxxxx|10xxxxxx`
 
 ### Three bytes
 
-If the seventeenth bit of the unicode code point is 0, the unicode code point is represented using three bytes.
+**Encoding**: If the seventeenth bit of the unicode code point is 0, the unicode code point is represented using three bytes.
+
+**Decoding**: If the UTF-8 code point starts with `1110` it has two continuation bytes, and the unicode code point is represented using the first sixteen least significant bits.
 
 * Unicode code point: `xxxxxxxx|xxxxxxx0|xxxxxxxx|xxxxxxxx`
 * UTF-8 code point: `1110xxxx|10xxxxxx|10xxxxxx`
 
 ### Four bytes
 
-If the twentysecond bit of the unicode code point is 0, the unicode code point is represented using four bytes.
+**Encoding**:  If the twentysecond bit of the unicode code point is 0, the unicode code point is represented using four bytes.
+
+**Decoding**: If the UTF-8 code point starts with `11110` it has three continuation bytes, and the unicode code point is represented using the first twenty-one least significant bits.
 
 * Unicode code point: `xxxxxxxx|xx0xxxxx|xxxxxxxx|xxxxxxxx`
 * UTF-8 code point: `11110xxx|10xxxxxx|10xxxxxx|10xxxxxx`
-
-# Decoding
-A UTF-8 code point is decoded into a unicode code point using the following rules.
-
-* If the first bit of the UTF-8 code point is 0, the unicode code point is represented using [one byte](#one-byte).
-* If the first three bits of the UTF-8 code point are 110, the unicode code point is represented using [two bytes](#two-bytes).
-* If the first four bits of the UTF-8 code point are 1110, the unicode code point is represented using [three bytes](#three-bytes).
-* If the first five bits of the UTF-8 code point are 11110, the unicode code point is represented using [four bytes](#four-bytes).
-
-When a unicode code point is represented using two, three or four bytes, the remaining bits of the UTF-8 code point
-are continuation bytes. The continuation bytes start with the bit pattern `10`.
-
-**Note**: UTF-8 is a prefix code, which means that no UTF-8 code point is a prefix of another UTF-8 code point.
-This means that the first byte of a UTF-8 code point is enough to determine the length of the UTF-8 code point.
-
-### One byte
-
-### Two bytes
-
-### Three bytes
-
-### Four bytes
 */
 
-// use crate::utf8::ucs2;
 // use crate::prelude::*;
-
-fn check_code_point(code_point: u32) {
-    if code_point >= 0xD800 && code_point <= 0xDFFF {
-        panic!("Invalid UCS-2 sequence {}", code_point.to_string());
-    }
-}
+// use crate::unicode::check_code_point;
+use crate::unicode;
 
 /// Encode a unicode code point into a vector of UTF-8 code points.
 ///
@@ -87,21 +81,56 @@ fn encode_code_point(unicode_cp: u32) -> Vec<u8> {
     }
 
     let mut byte_vec: Vec<u8> = Vec::new();
-    // Check if the code point is representable using two bytes in UTF-8.
-    // If so, it is in the range 0x0080 to 0x07FF.
     if (unicode_cp & 0xFFFFF800) == 0 {
-        let s = (((unicode_cp >> 6) & 0x1F) | 0xC0) as u8;
-        byte_vec.push(s);
+        // Example:
+        // unicode_cp: 0x07FF -> 0b0000_0111_1111_1111
+        // 0x1F -> 0b0001_1111
+        //              ^^^^^^__ To be sure that the result is 5 bits
+        // 0xC0 -> 0b1100_0000
+        //           ^^^________ The start of the two bytes representation
+        //
+        // 0b0000_0111_1111_1111 >> 6 -> 0b0001_1111
+        // 0b0001_1111 & 0b0001_1111 -> 0b0001_1111
+        // 0b0001_1111 | 0b1100_0000 -> 0b1101_1111
+        byte_vec.push((((unicode_cp >> 6) & 0x1F) | 0xC0) as u8);
     } else if (unicode_cp & 0xFFFF0000) == 0 {
-        check_code_point(unicode_cp);
-        let s = (((unicode_cp >> 12) & 0x0F) | 0xE0) as u8;
-        byte_vec.push(s);
+        unicode::check_code_point(unicode_cp);
+        // Example:
+        // unicode_cp: 0xFFFF -> b1111_1111_1111_1111
+        // 0x0F -> 0b0000_1111
+        //                ^^^^__ To be sure that the result is 4 bits
+        // 0xE0 -> 0b1110_0000
+        //           ^^^^_______ The start of the three bytes representation
+
+        // 0b1111_1111_1111_1111 >> 12 -> 0b0000_1111
+        // 0b0000_1111 & 0b0000_1111 -> 0b0000_1111
+        // 0b0000_1111 | 0b1110_0000 -> 0b1110_1111
+        byte_vec.push((((unicode_cp >> 12) & 0x0F) | 0xE0) as u8);
+        byte_vec.push((((unicode_cp >> 6) & 0x3F) | 0x80) as u8); // Look at the comment above
     } else if (unicode_cp & 0xFFE00000) == 0 {
-        let s = (((unicode_cp >> 18) & 0x07) | 0xF0) as u8;
-        byte_vec.push(s);
-        byte_vec.push((((unicode_cp >> 12) & 0x3F) | 0x80) as u8); // Create a continuation byte
-        byte_vec.push((((unicode_cp >> 6) & 0x3F) | 0x80) as u8); // Create a continuation byte
+        // Example:
+        // unicode_cp: 0x10FFFF -> 0b0001_0000_1111_1111_1111_1111
+        // 0x07 -> 0b0000_0111
+        //                 ^^^__ To be sure that the result is 3 bits
+        // 0xF0 -> 0b1111_0000
+        //           ^^^^^^_____ The start of the four bytes representation
+        //
+        // 0b0001_0000_1111_1111_1111_1111 >> 18 -> 0b0000_0100
+        // 0b0000_0100 & 0b0000_0111 -> 0b0000_0100
+        // 0b0000_0100 | 0b1111_0000 -> 0b1111_0100
+        byte_vec.push((((unicode_cp >> 18) & 0x07) | 0xF0) as u8);
+        byte_vec.push((((unicode_cp >> 12) & 0x3F) | 0x80) as u8); // Look at the comment above
+        byte_vec.push((((unicode_cp >> 6) & 0x3F) | 0x80) as u8); // Look at the comment above
     }
+    // Example:
+    // unicode_cp: 0x07FF -> 0b0000_0111_1111_1111
+    // 0x3F -> 0b0011_1111
+    //             ^^^^^^^__ To be sure that the result is 6 bits
+    // 0x80 -> 0b1000_0000
+    //           ^^^________ The start of the continuation bytes
+    //
+    // 0b0000_0111_1111_1111 & 0b0011_1111 -> 0b0011_1111
+    // 0b0011_1111 | 0b1000_0000 -> 0b1011_1111
     byte_vec.push(((unicode_cp & 0x3F) | 0x80) as u8);
     byte_vec
 }
@@ -154,7 +183,7 @@ fn decode_symbol(byte_vec: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
         offset += 1;
         code_point = ((byte1 & 0x0F) << 12) | (byte2 << 6) | byte3;
         if code_point >= 0x0800 {
-            check_code_point(code_point);
+            unicode::check_code_point(code_point);
             return Some((code_point, offset));
         } else {
             panic!("Invalid continuation byte");

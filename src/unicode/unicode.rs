@@ -1,3 +1,19 @@
+/// Check if a unicode code point is valid.
+/// A unicode code point is valid if it is not in the range `0xD800` to `0xDFFF`.
+/// These code points are reserved for UTF-16 surrogate pairs.
+///
+/// # Parameters
+/// * `code_point`: [`u32`] - A unicode code point.
+///
+/// # Panics
+/// * If the input unicode code point is in the range `0xD800` to `0xDFFF`.
+pub fn check_code_point(code_point: u32) {
+    if code_point >= 0xD800 && code_point <= 0xDFFF {
+        panic!("Invalid UCS-2 sequence {}", code_point.to_string());
+    }
+}
+
+
 /// Pretty print the unicode code points in hexadecimal, (binary) and decimal of a vector of unicode code points.
 ///
 /// # Parameters
