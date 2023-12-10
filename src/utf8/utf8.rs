@@ -127,7 +127,7 @@ fn encode_code_point(unicode_cp: u32) -> Vec<u8> {
     // 0x3F -> 0b0011_1111
     //             ^^^^^^^__ To be sure that the result is 6 bits
     // 0x80 -> 0b1000_0000
-    //           ^^^________ The start of the continuation bytes
+    //           ^^_________ The start of the continuation bytes
     //
     // 0b0000_0111_1111_1111 & 0b0011_1111 -> 0b0011_1111
     // 0b0011_1111 | 0b1000_0000 -> 0b1011_1111
@@ -135,30 +135,65 @@ fn encode_code_point(unicode_cp: u32) -> Vec<u8> {
     byte_vec
 }
 
+/// Read the next byte from a vector of UTF-8 code points.
+///
+/// # Parameters
+/// * `byte_vec`: [`&Vec<u8>`] - A vector of UTF-8 code points.
+/// * `i`: [`usize`] - The index of the byte to read.
+///
+/// # Returns
+/// The next byte from the vector of UTF-8 code points.
+///
+/// # Panics
+/// * If the index `i` is out of bounds.
+/// * If the byte at index `i` is not a continuation byte.
 fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
     if i >= byte_vec.len() {
         panic!("Index out of bounds");
     }
-    let continuation_byte: u32 = (byte_vec[i] & 0xFF) as u32;
+    let continuation_byte: u8 = byte_vec[i] & 0xFF;
+    // Example:
+    // continuation_byte: 0b1011_1111
+    // 0xC0 -> 0b1100_0000
+    //           ^^_________ To be sure that the result is the two bits of the start of the continuation bytes
+    // 0x80 -> 0b1000_0000
+    //           ^^_________ The start of the continuation bytes
+    //
+    // 0b1011_1111 & 0b1100_0000 -> 0b1000_0000
     if (continuation_byte & 0xC0) == 0x80 {
-        return continuation_byte & 0x3F;
+        return (continuation_byte & 0x3F) as u32;
     }
     panic!("Invalid continuation byte");
 }
 
-fn decode_symbol(byte_vec: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
-    if i > byte_vec.len() {
+/// Decode a UTF-8 code point into a unicode code point.
+///
+/// # Parameters
+/// * `byte_vec`: [`&Vec<u8>`] - A vector of UTF-8 code points.
+/// * `i`: [`usize`] - The index of the byte to read. It should be the index of a prefix byte.
+///
+/// # Returns
+/// A tuple containing the unicode code point and the number of bytes read.
+/// * The unicode code point is the decoded UTF-8 code point.
+/// * The number of bytes read is the number of consumed bytes from the vector of UTF-8 code points.
+///
+/// # Panics
+/// * If the index `i` is out of bounds.
+/// * If the byte at index `i` is not a prefix byte.
+/// * If, after reading the first byte, the continuation bytes are not valid.
+fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
+    if i > utf8_cp.len() {
         panic!("Index out of bounds");
     }
 
-    if i == byte_vec.len() {
+    if i == utf8_cp.len() {
         return None;
     }
 
     let mut code_point: u32;
     let mut offset: usize = 0;
 
-    let byte1: u32 = (byte_vec[i] & 0xFF) as u32;
+    let byte1: u32 = (utf8_cp[i] & 0xFF) as u32;
     code_point = byte1;
     offset += 1;
     if (byte1 & 0x80) == 0 {
@@ -166,7 +201,11 @@ fn decode_symbol(byte_vec: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     }
 
     if (byte1 & 0xE0) == 0xC0 {
-        let byte2: u32 = read_next_byte(byte_vec, i + offset);
+        // Example:
+        // The first byte should be 110xxxxx
+        // The second byte is a continuation byte
+        //
+        let byte2: u32 = read_next_byte(utf8_cp, i + offset);
         code_point = ((byte1 & 0x1F) << 6) | byte2;
         offset += 1;
         if code_point >= 0x80 {
@@ -177,9 +216,9 @@ fn decode_symbol(byte_vec: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     }
 
     if (byte1 & 0xF0) == 0xE0 {
-        let byte2: u32 = read_next_byte(byte_vec, i + offset);
+        let byte2: u32 = read_next_byte(utf8_cp, i + offset);
         offset += 1;
-        let byte3: u32 = read_next_byte(byte_vec, i + offset);
+        let byte3: u32 = read_next_byte(utf8_cp, i + offset);
         offset += 1;
         code_point = ((byte1 & 0x0F) << 12) | (byte2 << 6) | byte3;
         if code_point >= 0x0800 {
@@ -191,11 +230,11 @@ fn decode_symbol(byte_vec: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     }
 
     if (byte1 & 0xF8) == 0xF0 {
-        let byte2: u32 = read_next_byte(byte_vec, i + offset);
+        let byte2: u32 = read_next_byte(utf8_cp, i + offset);
         offset += 1;
-        let byte3: u32 = read_next_byte(byte_vec, i + offset);
+        let byte3: u32 = read_next_byte(utf8_cp, i + offset);
         offset += 1;
-        let byte4: u32 = read_next_byte(byte_vec, i + offset);
+        let byte4: u32 = read_next_byte(utf8_cp, i + offset);
         offset += 1;
         code_point = ((byte1 & 0x07) << 0x12) | (byte2 << 0x0C) | (byte3 << 0x06) | byte4;
         if code_point >= 0x010000 && code_point <= 0x10FFFF {
