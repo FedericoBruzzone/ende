@@ -38,6 +38,28 @@ If the twentysecond bit of the unicode code point is 0, the unicode code point i
 
 * Unicode code point: `xxxxxxxx|xx0xxxxx|xxxxxxxx|xxxxxxxx`
 * UTF-8 code point: `11110xxx|10xxxxxx|10xxxxxx|10xxxxxx`
+
+# Decoding
+A UTF-8 code point is decoded into a unicode code point using the following rules.
+
+* If the first bit of the UTF-8 code point is 0, the unicode code point is represented using [one byte](#one-byte).
+* If the first three bits of the UTF-8 code point are 110, the unicode code point is represented using [two bytes](#two-bytes).
+* If the first four bits of the UTF-8 code point are 1110, the unicode code point is represented using [three bytes](#three-bytes).
+* If the first five bits of the UTF-8 code point are 11110, the unicode code point is represented using [four bytes](#four-bytes).
+
+When a unicode code point is represented using two, three or four bytes, the remaining bits of the UTF-8 code point
+are continuation bytes. The continuation bytes start with the bit pattern `10`.
+
+**Note**: UTF-8 is a prefix code, which means that no UTF-8 code point is a prefix of another UTF-8 code point.
+This means that the first byte of a UTF-8 code point is enough to determine the length of the UTF-8 code point.
+
+### One byte
+
+### Two bytes
+
+### Three bytes
+
+### Four bytes
 */
 
 // use crate::utf8::ucs2;
