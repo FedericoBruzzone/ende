@@ -1,20 +1,5 @@
 use crate::utf8;
 
-/// Check if a unicode code point is valid.
-/// A unicode code point is valid if it is not in the range `0xD800` to `0xDFFF`.
-/// These code points are reserved for UTF-16 surrogate pairs.
-///
-/// # Parameters
-/// * `code_point`: [`u32`] - A unicode code point.
-///
-/// # Panics
-/// * If the input unicode code point is in the range `0xD800` to `0xDFFF`.
-pub fn check_code_point(code_point: u32) {
-    if code_point >= 0xD800 && code_point <= 0xDFFF {
-        panic!("Invalid UCS-2 sequence {}", code_point.to_string());
-    }
-}
-
 /// Pretty print the unicode code points in hexadecimal, (binary) and decimal of a vector of unicode code points.
 ///
 /// # Parameters
@@ -50,6 +35,21 @@ fn print_unicode_vec<T: AsRef<Vec<u32>>>(unicode_cp: T, binary_flag: bool) {
 // ================================ Public API ================================
 // ============================================================================
 
+/// Check if a unicode code point is valid.
+/// A unicode code point is valid if it is not in the range `0xD800` to `0xDFFF`.
+/// These code points are reserved for UTF-16 surrogate pairs.
+///
+/// # Parameters
+/// * `code_point`: [`u32`] - A unicode code point.
+///
+/// # Panics
+/// * If the input unicode code point is in the range `0xD800` to `0xDFFF`.
+pub fn check_code_point(code_point: u32) {
+    if code_point >= 0xD800 && code_point <= 0xDFFF {
+        panic!("Invalid UCS-2 sequence {}", code_point.to_string());
+    }
+}
+
 /// Pretty print the unicode code points in hexadecimal and decimal of a vector of unicode code points.
 ///
 /// # Parameters
@@ -60,8 +60,9 @@ fn print_unicode_vec<T: AsRef<Vec<u32>>>(unicode_cp: T, binary_flag: bool) {
 ///
 /// # Example
 /// ```rust
+/// use encdec::prelude::*;
 /// let v: Vec<u32> = vec![0x10001];
-/// utf8::print_unicode_b(&v);
+/// unicode::print_unicode_b(&v);
 /// ```
 /// **Output**
 /// ```text
@@ -85,8 +86,9 @@ pub fn print_unicode_b<T: AsRef<Vec<u32>>>(unicode_cp: T) {
 ///
 /// # Example
 /// ```rust
+/// use encdec::prelude::*;
 /// let v: Vec<u32> = vec![0x10001];
-/// utf8::print_unicode(&v);
+/// unicode::print_unicode(&v);
 /// ```
 /// **Output**
 /// ```text

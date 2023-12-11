@@ -1,7 +1,7 @@
 // use encdec::prelude::*;
 use encdec::ucs2;
-use encdec::utf8;
 use encdec::unicode;
+use encdec::utf8;
 
 // cargo run --bin main
 fn main() {
