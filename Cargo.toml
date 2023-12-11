@@ -2,6 +2,12 @@
 name = "encdec"
 version = "0.1.0"
 edition = "2021"
+description = "A library for encoding/decoding unicode/utf-8/ucs-2(utf-16) code points."
+repository = "https://github.com/FedericoBruzzone/encdec/"
+license = "GPL-3.0"
+readme = "README.md"
+keywords = ["encoder", "decoder", "encode", "decode", "hex", "binary", "ascii", "utf8", "utf16", "unicode"]
+categories = ["encoding", "decoding", "encoding-decoding", "encoder", "decoder", "encode", "decode", "hex", "binary", "ascii", "utf8", "utf16", "unicode"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

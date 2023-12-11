@@ -293,13 +293,10 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
         //                     0b0000_1000 ->
         // 0b0000_0001_0000_0011_0100_1000
         let byte2: u32 = read_next_byte(utf8_cp, i + offset);
-        println!("byte2: {:b}", byte2);
         offset += 1;
         let byte3: u32 = read_next_byte(utf8_cp, i + offset);
-        println!("byte3: {:b}", byte3);
         offset += 1;
         let byte4: u32 = read_next_byte(utf8_cp, i + offset);
-        println!("byte4: {:b}", byte4);
         offset += 1;
         code_point = ((byte1 & 0x07) << 18) | (byte2 << 12) | (byte3 << 6) | byte4;
         if code_point >= 0x010000 && code_point <= 0x10FFFF {
@@ -324,7 +321,7 @@ fn print_utf8_vec<T: AsRef<Vec<u8>>>(utf8_cp: T, binary_flag: bool) {
     let binary_repr: Vec<String> = v.iter().map(|x| format!("{:08b}", x)).collect();
     println!();
     println!(
-        "--------------- UTF-8 encoding of \"{}\" ---------------",
+        "--------------- UTF-8 of \"{}\" ---------------",
         string_repr
     );
     println!("Hex: {:x?}", v);
@@ -334,7 +331,7 @@ fn print_utf8_vec<T: AsRef<Vec<u8>>>(utf8_cp: T, binary_flag: bool) {
     println!("Dec: {:?}", v);
     println!(
         "{}{}",
-        "-".repeat(52),
+        "-".repeat(43),
         "-".repeat(string_repr.chars().count())
     );
     println!();

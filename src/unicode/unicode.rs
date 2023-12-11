@@ -1,3 +1,5 @@
+use crate::utf8;
+
 /// Check if a unicode code point is valid.
 /// A unicode code point is valid if it is not in the range `0xD800` to `0xDFFF`.
 /// These code points are reserved for UTF-16 surrogate pairs.
@@ -24,14 +26,23 @@ pub fn check_code_point(code_point: u32) {
 fn print_unicode_vec<T: AsRef<Vec<u32>>>(unicode_cp: T, binary_flag: bool) {
     let v: Vec<u32> = unicode_cp.as_ref().to_vec();
     let binary_repr: Vec<String> = v.iter().map(|x| format!("{:08b}", x)).collect();
+    let string_repr: String = String::from_utf8(utf8::encode_in_utf8(&v)).unwrap();
     println!();
-    println!("--------------- UNICODE code points ---------------");
+    println!(
+        "--------------- UNICODE of \"{}\" ---------------",
+        string_repr
+    );
     println!("Hex: {:x?}", v);
     if binary_flag {
         println!("Bin: {:?}", binary_repr);
     }
     println!("Dec: {:?}", v);
-    println!("{}", "-".repeat(51));
+    println!(
+        "{}{}",
+        "-".repeat(45),
+        "-".repeat(string_repr.chars().count())
+    );
+
     println!();
 }
 
