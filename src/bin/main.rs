@@ -26,10 +26,31 @@ fn main() {
     let unicode_vec_from_ucs2 = ucs2::ucs2_decode(&enc_ucs2);
     // println!("UNICODE code point from ucs-2: {:x?}", unicode_vec_from_ucs2);
     let unicode_vec_from_utf8 = utf8::decode_from_utf8(&utf8_vec);
-    // println!("UNICODE code point from utf-8: {:x?}", unicode_vec_from_utf8);
+    println!("UNICODE code point from utf-8: {:x?}", unicode_vec_from_utf8);
     utf8::print_utf8(&utf8_vec);
     utf8::print_utf8_b(&utf8_vec);
 
+    println!("------------------------------------");
+
+    let v = vec![0x0024];
+    let utf8_vec = utf8::encode_in_utf8(&v);
+    let unicode_vec_from_utf8 = utf8::decode_from_utf8(&utf8_vec);
+    utf8::print_utf8_b(&utf8_vec);
+
+    let v = vec![0x0418];
+    let utf8_vec = utf8::encode_in_utf8(&v);
+    let unicode_vec_from_utf8 = utf8::decode_from_utf8(&utf8_vec);
+    utf8::print_utf8_b(&utf8_vec);
+
+    let v = vec![0x20AC];
+    let utf8_vec = utf8::encode_in_utf8(&v);
+    let unicode_vec_from_utf8 = utf8::decode_from_utf8(&utf8_vec);
+    utf8::print_utf8_b(&utf8_vec);
+
+    let v = vec![0x10348];
+    let utf8_vec = utf8::encode_in_utf8(&v);
+    let unicode_vec_from_utf8 = utf8::decode_from_utf8(&utf8_vec);
+    utf8::print_utf8_b(&utf8_vec);
 
     // let v2: Vec<u32> = vec![0x10001, 0x10002]; // Array of code point in unicode
     // let enc2 = utf8::encode_in_utf8(&v2);

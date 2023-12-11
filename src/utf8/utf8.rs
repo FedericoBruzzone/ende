@@ -77,52 +77,53 @@ use crate::unicode;
 /// * If the input unicode code point is invalid.
 fn encode_code_point(unicode_cp: u32) -> Vec<u8> {
     if (unicode_cp & 0xFFFFFF80) == 0 {
+        // unicode_cp: 0x24 -> 0b0000_0000_0010_0100
         return vec![unicode_cp as u8];
     }
 
     let mut byte_vec: Vec<u8> = Vec::new();
     if (unicode_cp & 0xFFFFF800) == 0 {
-        // Example:
-        // unicode_cp: 0x07FF -> 0b0000_0111_1111_1111
+        // unicode_cp: 0x418 -> 0b0000_0100_0001_1000
         // 0x1F -> 0b0001_1111
         //              ^^^^^^__ To be sure that the result is 5 bits
         // 0xC0 -> 0b1100_0000
         //           ^^^________ The start of the two bytes representation
         //
-        // 0b0000_0111_1111_1111 >> 6 -> 0b0001_1111
-        // 0b0001_1111 & 0b0001_1111 -> 0b0001_1111
-        // 0b0001_1111 | 0b1100_0000 -> 0b1101_1111
+        // 0b0000_0100_0001_1000 >> 6 -> 0b0001_0000
+        // 0b0001_0000 & 0b0001_1111 -> 0b0001_0000
+        // 0b0001_0000 | 0b1100_0000 -> 0b1101_0000
         byte_vec.push((((unicode_cp >> 6) & 0x1F) | 0xC0) as u8);
     } else if (unicode_cp & 0xFFFF0000) == 0 {
         unicode::check_code_point(unicode_cp);
-        // Example:
-        // unicode_cp: 0xFFFF -> b1111_1111_1111_1111
+        // unicode_cp: 0x20AC -> 0b0010_0000_1010_1100
         // 0x0F -> 0b0000_1111
         //                ^^^^__ To be sure that the result is 4 bits
         // 0xE0 -> 0b1110_0000
         //           ^^^^_______ The start of the three bytes representation
-
-        // 0b1111_1111_1111_1111 >> 12 -> 0b0000_1111
-        // 0b0000_1111 & 0b0000_1111 -> 0b0000_1111
-        // 0b0000_1111 | 0b1110_0000 -> 0b1110_1111
+        // 0x3F -> 0b0011_1111
+        //             ^^^^^^^__ To be sure that the result is 6 bits
+        // 0x80 -> 0b1000_0000
+        //           ^^_________ The start of the continuation bytes
+        //
+        // 0b0010_0000_1010_1100 >> 12 -> 0b0000_0010
+        // 0b0000_0010 & 0b0000_1111 -> 0b0000_0010
+        // 0b0000_0010 | 0b1110_0000 -> 0b1110_0010
         byte_vec.push((((unicode_cp >> 12) & 0x0F) | 0xE0) as u8);
         byte_vec.push((((unicode_cp >> 6) & 0x3F) | 0x80) as u8); // Look at the comment above
     } else if (unicode_cp & 0xFFE00000) == 0 {
-        // Example:
-        // unicode_cp: 0x10FFFF -> 0b0001_0000_1111_1111_1111_1111
+        // unicode_cp: 0x10348 -> 0b0001_0000_0011_0100_1000
         // 0x07 -> 0b0000_0111
         //                 ^^^__ To be sure that the result is 3 bits
         // 0xF0 -> 0b1111_0000
         //           ^^^^^^_____ The start of the four bytes representation
         //
-        // 0b0001_0000_1111_1111_1111_1111 >> 18 -> 0b0000_0100
-        // 0b0000_0100 & 0b0000_0111 -> 0b0000_0100
-        // 0b0000_0100 | 0b1111_0000 -> 0b1111_0100
+        // 0b0001_0000_0011_0100_1000 >> 18 -> 0b0
+        // 0b0 & 0b0000_0111 -> 0b0
+        // 0b0 | 0b1111_0000 -> 0b1111_0000
         byte_vec.push((((unicode_cp >> 18) & 0x07) | 0xF0) as u8);
         byte_vec.push((((unicode_cp >> 12) & 0x3F) | 0x80) as u8); // Look at the comment above
         byte_vec.push((((unicode_cp >> 6) & 0x3F) | 0x80) as u8); // Look at the comment above
     }
-    // Example:
     // unicode_cp: 0x07FF -> 0b0000_0111_1111_1111
     // 0x3F -> 0b0011_1111
     //             ^^^^^^^__ To be sure that the result is 6 bits
@@ -152,10 +153,9 @@ fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
         panic!("Index out of bounds");
     }
     let continuation_byte: u8 = byte_vec[i] & 0xFF;
-    // Example:
     // continuation_byte: 0b1011_1111
     // 0xC0 -> 0b1100_0000
-    //           ^^_________ To be sure that the result is the two bits of the start of the continuation bytes
+    //           ^^_________ In order to compare (keep) the first two bits
     // 0x80 -> 0b1000_0000
     //           ^^_________ The start of the continuation bytes
     //
@@ -197,14 +197,28 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     code_point = byte1;
     offset += 1;
     if (byte1 & 0x80) == 0 {
+        // utf8_cp: [0x24] -> [0b0010_0100]
+        // byte1: 0x24 -> 0b0010_0100
         return Some((code_point, offset));
     }
 
     if (byte1 & 0xE0) == 0xC0 {
-        // Example:
-        // The first byte should be 110xxxxx
-        // The second byte is a continuation byte
+        // utf8_cp: [0xD0, 0x98] -> [0b1101_0000, 0b1001_1000]
+        // 0xE0 -> 0b1110_0000
+        //           ^^^^_______ In order to compare (keep) the first three bits
+        // 0xC0 -> 0b1100_0000
+        //           ^^^________ The start of the two bytes representation
+        // 0x1F -> 0b0001_1111
+        //              ^^^^^^__ To be sure that the result is 5 bits
         //
+        // 0b1101_0000 & 0b0001_1111 -> 0b0001_0000
+        // 0b0001_0000 << 6 -> 0b0000_0100_0000_0000
+        //
+        // 0b0001_1000
+        // ^^^^^^^^^^^__ From reading the next byte
+        // 0b0000_0100_0000_0000 |
+        //           0b1001_1000 ->
+        // 0b0000_0100_0001_1000
         let byte2: u32 = read_next_byte(utf8_cp, i + offset);
         code_point = ((byte1 & 0x1F) << 6) | byte2;
         offset += 1;
@@ -216,6 +230,27 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     }
 
     if (byte1 & 0xF0) == 0xE0 {
+        // utf8_cp: [0xE2, 0x82, 0xAC] -> [0b1110_0010, 0b1000_0010, 0b1010_1100]
+        // 0xF0 -> 0b1111_0000
+        //           ^^^^^______ In order to compare (keep) the first four bits
+        // 0xE0 -> 0b1110_0000
+        //           ^^^^_______ The start of the three bytes representation
+        // 0x0F -> 0b0000_1111
+        //                ^^^^__ To be sure that the result is 4 bits
+        //
+        // 0b1110_0010 & 0b0000_1111 -> 0b0000_0010
+        // 0b0000_0010 << 12 -> 0b0010_0000_0000_0000
+        //
+        // 0b0000_0010 << 6 -> 0b0000_0000_1000_0000
+        // ^^^^^^^^^^^__ From reading the next byte
+        //
+        // 0b0010_1100
+        // ^^^^^^^^^^^__ From reading the next byte
+        //
+        // 0b0010_0000_0000_0000 |
+        // 0b0000_0000_1000_0000 |
+        //           0b0010_1100 ->
+        // 0b0010_0000_1010_1100
         let byte2: u32 = read_next_byte(utf8_cp, i + offset);
         offset += 1;
         let byte3: u32 = read_next_byte(utf8_cp, i + offset);
@@ -230,11 +265,15 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     }
 
     if (byte1 & 0xF8) == 0xF0 {
+        println!("byte1: {:x?}", byte1);
         let byte2: u32 = read_next_byte(utf8_cp, i + offset);
+        println!("byte2: {:x?}", byte2);
         offset += 1;
         let byte3: u32 = read_next_byte(utf8_cp, i + offset);
+        println!("byte3: {:x?}", byte3);
         offset += 1;
         let byte4: u32 = read_next_byte(utf8_cp, i + offset);
+        println!("byte4: {:x?}", byte4);
         offset += 1;
         code_point = ((byte1 & 0x07) << 0x12) | (byte2 << 0x0C) | (byte3 << 0x06) | byte4;
         if code_point >= 0x010000 && code_point <= 0x10FFFF {
