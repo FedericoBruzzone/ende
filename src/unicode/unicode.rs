@@ -13,7 +13,6 @@ pub fn check_code_point(code_point: u32) {
     }
 }
 
-
 /// Pretty print the unicode code points in hexadecimal, (binary) and decimal of a vector of unicode code points.
 ///
 /// # Parameters

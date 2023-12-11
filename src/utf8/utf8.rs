@@ -158,6 +158,9 @@ fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
     //           ^^_________ In order to compare (keep) the first two bits
     // 0x80 -> 0b1000_0000
     //           ^^_________ The start of the continuation bytes
+    // 0x3F -> 0b0011_1111
+    //             ^^^^^^^__ To be sure that the result is 6 bits
+    //
     //
     // 0b1011_1111 & 0b1100_0000 -> 0b1000_0000
     if (continuation_byte & 0xC0) == 0x80 {
@@ -265,17 +268,40 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     }
 
     if (byte1 & 0xF8) == 0xF0 {
-        println!("byte1: {:x?}", byte1);
+        // utf8_cp: [0xF0, 0x10, 0xD, 0x8] -> [0b1111_0000, 0b0001_0000, 0b0000_1101, 0b0000_1000]
+        // 0xF8 -> 0b1111_1000
+        //           ^^^^^^_____ In order to compare (keep) the first five bits
+        //
+        // 0xF0 -> 0b1111_0000
+        //           ^^^^^______ The start of the four bytes representation
+        // 0x07 -> 0b0000_0111
+        //                 ^^^__ To be sure that the result is 3 bits
+        //
+        // 0b1111_0000 & 0b0000_0111 -> 0b0000_0000
+        // 0b0000_0000 << 18 -> 0b0000_0000_0000_0000_0000_0000
+        //
+        // 0b0001_0000 << 12 -> 0b0001_0000_0000_0000_0000
+        // ^^^^^^^^^^^__ From reading the next byte
+        // 0b0000_1101 << 6 -> 0b0000_0011_0100_0000
+        // ^^^^^^^^^^^__ From reading the next byte
+        // 0b0000_1000
+        // ^^^^^^^^^^^__ From reading the next byte
+        //
+        // 0b0000_0000_0000_0000_0000_0000 |
+        //      0b0001_0000_0000_0000_0000 |
+        //           0b0000_0011_0100_0000 |
+        //                     0b0000_1000 ->
+        // 0b0000_0001_0000_0011_0100_1000
         let byte2: u32 = read_next_byte(utf8_cp, i + offset);
-        println!("byte2: {:x?}", byte2);
+        println!("byte2: {:b}", byte2);
         offset += 1;
         let byte3: u32 = read_next_byte(utf8_cp, i + offset);
-        println!("byte3: {:x?}", byte3);
+        println!("byte3: {:b}", byte3);
         offset += 1;
         let byte4: u32 = read_next_byte(utf8_cp, i + offset);
-        println!("byte4: {:x?}", byte4);
+        println!("byte4: {:b}", byte4);
         offset += 1;
-        code_point = ((byte1 & 0x07) << 0x12) | (byte2 << 0x0C) | (byte3 << 0x06) | byte4;
+        code_point = ((byte1 & 0x07) << 18) | (byte2 << 12) | (byte3 << 6) | byte4;
         if code_point >= 0x010000 && code_point <= 0x10FFFF {
             return Some((code_point, offset));
         }

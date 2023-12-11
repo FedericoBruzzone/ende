@@ -1,6 +1,6 @@
 // use encdec::prelude::*;
-use encdec::utf8;
 use encdec::ucs2;
+use encdec::utf8;
 
 // cargo run --bin main
 fn main() {
@@ -26,7 +26,10 @@ fn main() {
     let unicode_vec_from_ucs2 = ucs2::ucs2_decode(&enc_ucs2);
     // println!("UNICODE code point from ucs-2: {:x?}", unicode_vec_from_ucs2);
     let unicode_vec_from_utf8 = utf8::decode_from_utf8(&utf8_vec);
-    println!("UNICODE code point from utf-8: {:x?}", unicode_vec_from_utf8);
+    println!(
+        "UNICODE code point from utf-8: {:x?}",
+        unicode_vec_from_utf8
+    );
     utf8::print_utf8(&utf8_vec);
     utf8::print_utf8_b(&utf8_vec);
 
