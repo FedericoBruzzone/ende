@@ -1,6 +1,7 @@
 // use encdec::prelude::*;
 use encdec::ucs2;
 use encdec::unicode;
+use encdec::utf16;
 use encdec::utf8;
 
 // cargo run --bin main
@@ -34,7 +35,7 @@ fn main() {
     utf8::print_utf8(&utf8_vec);
     utf8::print_utf8_b(&utf8_vec);
 
-    println!("------------------------------------");
+    println!("UTF8 ------------------------------------");
 
     let v = vec![0x0024];
     let utf8_vec = utf8::encode_in_utf8(&v);
@@ -56,6 +57,15 @@ fn main() {
     let unicode_vec_from_utf8 = utf8::decode_from_utf8(&utf8_vec);
     utf8::print_utf8_b(&utf8_vec);
     unicode::print_unicode_b(&v);
+
+    println!("UTF16 ------------------------------------");
+    let v = vec![0x10001];
+    let utf16_vec = utf16::encode_in_utf16(&v);
+    println!("utf16_vec: {:x?}", utf16_vec);
+    let unicode_vec_from_utf16 = utf16::decode_from_utf16(&utf16_vec);
+    println!("unicode_vec_from_utf16: {:x?}", unicode_vec_from_utf16);
+
+    unicode::print_unicode_b(&unicode_vec_from_utf16);
 
     // let v2: Vec<u32> = vec![0x10001, 0x10002]; // Array of code point in unicode
     // let enc2 = utf8::encode_in_utf8(&v2);

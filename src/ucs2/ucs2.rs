@@ -1,9 +1,14 @@
-// UCS-2 (Universal Character Set 2) is a character encoding that represents each
-// character in the Unicode character set with a fixed-size 16-bit code unit.
-// It's important to note that UCS-2 is limited to the Basic Multilingual Plane
-// (BMP) of Unicode, which includes character codes from U+0000 to U+FFFF.
-// Characters outside this range require more than 16 bits and are represented
-// using UTF-16 instead.
+/*!
+UCS-2 encoding and decoding.
+
+UCS-2 (Universal Character Set 2) is a character encoding that represents each
+character in the Unicode character set with a fixed-size 16-bit code unit.
+It's important to note that UCS-2 is limited to the Basic Multilingual Plane
+(BMP) of Unicode, which includes character codes from U+0000 to U+FFFF.
+Characters outside this range require more than 16 bits and are represented
+using UTF-16 instead.
+
+*/
 
 pub fn ucs2_encode<T: AsRef<Vec<u32>>>(v: T) -> Vec<u16> {
     let mut new_v: Vec<u16> = Vec::new();

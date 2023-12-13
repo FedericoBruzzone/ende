@@ -61,7 +61,7 @@ When a unicode code point is represented using two, three or four bytes, the rem
 * UTF-8 code point: `11110xxx|10xxxxxx|10xxxxxx|10xxxxxx`
 */
 
-use crate::prelude::*;
+// use crate::prelude::*;
 // use crate::unicode::check_code_point;
 use crate::unicode;
 
@@ -440,13 +440,14 @@ pub fn encode_in_utf8<T: AsRef<Vec<u32>>>(unicode_cp: T) -> Vec<u8> {
 /// assert_eq!(dec, vec![0x10001]);
 /// ```
 pub fn decode_from_utf8<T: AsRef<Vec<u8>>>(utf8_cp: T) -> Vec<u32> {
-    let v = utf8_cp.as_ref();
-    let mut code_points: Vec<u32> = Vec::new();
+    let utf8_cp = utf8_cp.as_ref();
+    let len: usize = utf8_cp.len();
     let mut i: usize = 0;
-    while i < v.len() {
-        let (code_point, offset) = decode_symbol(&v, i).unwrap();
+    let mut unicode_cp: Vec<u32> = Vec::new();
+    while i < len {
+        let (cp, offset) = decode_symbol(&utf8_cp, i).unwrap();
         i += offset;
-        code_points.push(code_point);
+        unicode_cp.push(cp);
     }
-    code_points
+    unicode_cp
 }
