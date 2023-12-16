@@ -60,10 +60,12 @@ fn main() {
 
     println!("UTF16 ------------------------------------");
     let v = vec![0x10001];
+    // let v = vec![0xD800, 0xDC00];
     let utf16_vec = utf16::encode_in_utf16(&v);
-    println!("utf16_vec: {:x?}", utf16_vec);
+    // println!("utf16_vec: {:x?}", utf16_vec);
     let unicode_vec_from_utf16 = utf16::decode_from_utf16(&utf16_vec);
-    println!("unicode_vec_from_utf16: {:x?}", unicode_vec_from_utf16);
+    // println!("unicode_vec_from_utf16: {:x?}", unicode_vec_from_utf16);
+    utf16::print_utf16_b(&utf16_vec);
 
     unicode::print_unicode_b(&unicode_vec_from_utf16);
 

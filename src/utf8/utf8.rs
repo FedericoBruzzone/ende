@@ -15,9 +15,9 @@ A UTF-8 code point is decoded into a unicode code point using the following rule
 * If the first four bits of the UTF-8 code point are 1110, the unicode code point is represented using [three bytes](#three-bytes).
 * If the first five bits of the UTF-8 code point are 11110, the unicode code point is represented using [four bytes](#four-bytes).
 
-When a unicode code point is represented using two, three or four bytes, the remaining bits of the UTF-8 code point are continuation bytes. The continuation bytes start with the bit pattern `10`.
+When a unicode code point is represented using two, three or four bytes, these bytes of the UTF-8 code point are continuation bytes. The continuation bytes start with the bit pattern `10`.
 
-## Rrepresentation
+## Representation
 
 **Note**:
 
@@ -307,14 +307,14 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     panic!("Invalid UTF-8 sequence");
 }
 
-/// Pretty print the unicode code points in hexadecimal, (binary) and decimal of a vector of unicode code points.
+/// Pretty print the UTF-8 code points in hexadecimal, (binary) and decimal.
 ///
 /// # Parameters
-/// * `unicode_cp`: [`Vec<u32>`] - A vector of unicode code points.
-/// * `binary_flag`: [`bool`] - A flag to print the binary representation of the unicode code points.
+/// * `utf8_cp`: [`AsRef<Vec<u8>>`] - A vector of UTF-8 code points.
+/// * `binary_flag`: [`bool`] - A flag to print the binary representation of the UTF-8 code points.
 ///
 /// # Note
-/// The bytes printed in hexadecimal are code points in unicode.
+/// The bytes printed in hexadecimal are code points in UTF-8.
 fn print_utf8_vec<T: AsRef<Vec<u8>>>(utf8_cp: T, binary_flag: bool) {
     let v: Vec<u8> = utf8_cp.as_ref().to_vec();
     let string_repr: String = String::from_utf8(v.clone()).unwrap();
@@ -430,7 +430,6 @@ pub fn encode_in_utf8<T: AsRef<Vec<u32>>>(unicode_cp: T) -> Vec<u8> {
 /// # Panics
 /// * If the input vector (`utf8_cp`) of UTF-8 code points contains invalid code points.
 /// * If the input vector (`utf8_cp`) of UTF-8 code points contains invalid continuation bytes.
-/// * If the input vector (`utf8_cp`) of UTF-8 code points contains invalid UTF-8 sequences.
 ///
 /// # Example
 /// ```rust
