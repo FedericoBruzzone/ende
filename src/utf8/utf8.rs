@@ -310,7 +310,7 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
 /// Pretty print the UTF-8 code points in hexadecimal, (binary) and decimal.
 ///
 /// # Parameters
-/// * `utf8_cp`: [`AsRef<Vec<u8>>`] - A vector of UTF-8 code points.
+/// * `utf8_cp`: [`Vec<u8>`] - A vector of UTF-8 code points.
 /// * `binary_flag`: [`bool`] - A flag to print the binary representation of the UTF-8 code points.
 ///
 /// # Note

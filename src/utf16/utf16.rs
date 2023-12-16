@@ -79,7 +79,7 @@ fn decode_symbol(utf16_cp: &Vec<u16>, i: usize) -> Option<(u32, usize)> {
 /// Pretty print the UTF-16 code points in hexadecimal, (binary) and decimal.
 ///
 /// # Parameters
-/// * `utf16_cp`: [`AsRef<Vec<u16>>`] - A vector of UTF-16 code points.
+/// * `utf16_cp`: [`Vec<u16>`] - A vector of UTF-16 code points.
 /// * `binary_flag`: [`bool`] - A flag to print the binary representation of the UTF-16 code points.
 ///
 /// # Note
@@ -122,7 +122,7 @@ fn print_utf16_vec<T: AsRef<Vec<u16>>>(utf16_cp: T, binary_flag: bool) {
 /// ```rust
 /// use encdec::prelude::*;
 /// let v: Vec<u16> = vec![0xD800, 0xDC00];
-/// utf8::print_utf8(&v);
+/// utf16::print_utf16(&v);
 /// ```
 /// **Output**
 /// ```text
@@ -146,7 +146,7 @@ pub fn print_utf16<T: AsRef<Vec<u16>>>(utf16_cp: T) {
 /// ```rust
 /// use encdec::prelude::*;
 /// let v: Vec<u16> = vec![0xD800, 0xDC00];
-/// utf8::print_utf8(&v);
+/// utf16::print_utf16(&v);
 /// ```
 /// **Output**
 /// ```text
