@@ -22,6 +22,7 @@ When a unicode code point is represented using two, three or four bytes, these b
 **Note**:
 
 * UTF-8 is a prefix code, which means that no UTF-8 code point is a prefix of another UTF-8 code point. This means that the first byte of a UTF-8 code point is enough to determine the length of the UTF-8 code point and decode it in an unambiguous way.
+* UTF-8 is capable of encoding all 1,112,064 valid unicode code points in Unicode.
 * The number of `x`s on the right side of the `0` in the unicode code point are the number of free bits on the UTF-8 code point.
 
 ### One byte
@@ -30,34 +31,34 @@ When a unicode code point is represented using two, three or four bytes, these b
 
 **Decoding**: If the UTF-8 code point starts with a 0, the unicode code point is represented using only the first eight least significant bits.
 
-* Unicode code point: `xxxxxxxx|xxxxxxxx|xxxxxxxx|0xxxxxxx`
+* Unicode code point: `nnnnnnnn|nnnnnnnn|nnnnnnnn|0xxxxxxx`
 * UTF-8 code point: `0xxxxxxx`
 
 ### Two bytes
 
 **Encoding**: If the twelfth bit of the unicode code point is 0, the unicode code point is represented in UTF-8 using two bytes.
 
-**Decoding**: If the UTF-8 code point starts with `110` it has only one continuation byte, and the unicode code point is represented using the first eleven least significant bits.
+**Decoding**: If the UTF-8 code point starts with `110` it has only one continuation byte, and the unicode code point is represented using the first eleven least significant bits (excluding the prefix bits).
 
-* Unicode code point: `xxxxxxxx|xxxxxxxx|xxxx0xxx|xxxxxxxx`
+* Unicode code point: `nnnnnnnn|nnnnnnnn|nnnn0xxx|xxxxxxxx`
 * UTF-8 code point: `110xxxxx|10xxxxxx`
 
 ### Three bytes
 
 **Encoding**: If the seventeenth bit of the unicode code point is 0, the unicode code point is represented using three bytes.
 
-**Decoding**: If the UTF-8 code point starts with `1110` it has two continuation bytes, and the unicode code point is represented using the first sixteen least significant bits.
+**Decoding**: If the UTF-8 code point starts with `1110` it has two continuation bytes, and the unicode code point is represented using the first sixteen least significant bits (excluding the prefix bits).
 
-* Unicode code point: `xxxxxxxx|xxxxxxx0|xxxxxxxx|xxxxxxxx`
+* Unicode code point: `nnnnnnnn|nnnnnnn0|xxxxxxxx|xxxxxxxx`
 * UTF-8 code point: `1110xxxx|10xxxxxx|10xxxxxx`
 
 ### Four bytes
 
 **Encoding**:  If the twentysecond bit of the unicode code point is 0, the unicode code point is represented using four bytes.
 
-**Decoding**: If the UTF-8 code point starts with `11110` it has three continuation bytes, and the unicode code point is represented using the first twenty-one least significant bits.
+**Decoding**: If the UTF-8 code point starts with `11110` it has three continuation bytes, and the unicode code point is represented using the first twenty-one least significant bits (excluding the prefix bits).
 
-* Unicode code point: `xxxxxxxx|xx0xxxxx|xxxxxxxx|xxxxxxxx`
+* Unicode code point: `nnnnnnnn|nn0xxxxx|xxxxxxxx|xxxxxxxx`
 * UTF-8 code point: `11110xxx|10xxxxxx|10xxxxxx|10xxxxxx`
 */
 

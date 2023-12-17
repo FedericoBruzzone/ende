@@ -4,46 +4,83 @@ UTF-16 encoding and decoding.
 # Encoding
 A unicode code point is represented using two or four bytes in UTF-16, depending its value.
 * If the unicode code point is less than 0xFFFF, it is represented using [a word of 16 bits (two bytes)](#two-bytes-one-word).
-* If the unicode code point is greater than or equal to 0xFFFF, it is represented using a surrogate-pair [two words of 16 bits (four bytes)](#four-bytes-two-words---surrogate-pair).
+* If the unicode code point is greater than or equal to 0xFFFF, it is represented using a surrogate pair [two words of 16 bits (four bytes)](#four-bytes-two-words---surrogate-pair).
 
 # Decoding
 A UTF-16 code point is decoded into a unicode code point using the following rules.
 * If the UTF-16 code point is less than 0xD800 or greater than 0xDBFF and less than 0xFFFF, it is a unicode code point.
-* If the UTF-16 code point is between 0xD800 and 0xDBFF, it is a [surrogate pair](#surrogate-pair), so two UTF-16 code points are required to represent a unicode code point.
-
-When a unicode code point is represented using four bytes, the
+* If the UTF-16 code point is between 0xD800 and 0xDBFF, it is a [surrogate pair](#two-bytes-one-word), so two UTF-16 code points are required to represent a unicode code point.
 
 ## Representation
 
+**Note**:
+
+* There are not unicode code points in the range from 0xD800 to 0xDBFF because by unicode specification these values are reserved for surrogate pairs. So, every code point from 0x0 to 0xFFFF is a valid character.
+* UTF-16  is capable of encoding all 1,112,064 (2^16 + 2^20 - (0xDFFF - 0xD800 - 1)) valid code points of Unicode.
+
 ### Two bytes (one word)
+
+**Encoding**: If the unicode code point is less than 0xFFFF, the unicode code point is represented in UTF-16 using only the 16 least significant bits.
+
+**Decoding**: If the UTF-16 code point is less than 0xD800 or greater than 0xDBFF and less than 0xFFFF, the unicode code point is represented using only the 16 least significant bits.
+
+* Unicode code point: `nnnnnnnn|nnnnnnnn|xxxxxxxx|xxxxxxxx`
+* UTF-16 code point: `xxxxxxxx|xxxxxxxx`
 
 ### Four bytes (two words) - Surrogate pair
 
-## Surrogate pair
-A surrogate pair is a pair of UTF-16 code points that together encode a single unicode code point.
+**Encoding**: If the unicode code point is greater than or equal to 0xFFFF, the unicode code point is represented in UTF-16 using a surrogate pair.
+
+**Decoding**: If the UTF-16 code point is between 0xD800 and 0xDBFF it is a surrogate pair, and the unicode code point is represented using the first 10 bits of the first UTF-16 code point and the first ten least significant bits (excluding the prefix bits).
+
+* Unicode code point: `nnnnnnnn|nnnnyyyy|yyyyyyxx|xxxxxxxx`
+* UTF-16 code point: `110110yy|yyyyyyyy|110111xx|xxxxxxxx`
+
+**Surrogate pair**
+
 * The first UTF-16 code point is a high surrogate and the second UTF-16 code point is a low surrogate.
 * The high surrogate is in the range 0xD800 to 0xDBFF.
 * The low surrogate is in the range 0xDC00 to 0xDFFF.
-* The unicode code point is in the range 0x10000 to 0x10FFFF.
-* The unicode code point is calculated as follows:
-    * Subtract 0xD800 from the high surrogate to form a 10-bit value in the range 0x0000 to 0x03FF.
-    * Subtract 0xDC00 from the low surrogate to form a 10-bit value in the range 0x0000 to 0x03FF.
-    * Add 0x10000 to the high 10-bit value, resulting in a 20-bit value in the range 0x10000 to 0x10FFFF.
-    * Add the low 10-bit value to the 20-bit value, resulting in the final value.
-    * The final value is the unicode code point.
 */
 
+/// Encode a unicode code point into a vector of UTF-16 code points.
+///
+/// # Parameters
+/// * `unicode_cp`: [`u32`] - A unicode code point.
+///
+/// # Returns
+/// A [`Vec<u16>`] containing the UTF-16 code points.
+///
+/// # Panics
+/// * If the input unicode code point is invalid.
 fn encode_code_point(unicode_cp: u32) -> Vec<u16> {
     if unicode_cp < 0xFFFF {
         // unicode_cp: 0x0251 -> 0b0000_0010_0101_0001
         return vec![unicode_cp as u16];
     }
 
+    // unicode_cp: 0x10001 -> 0b0001_0000_0000_0000_0001
+    // 0x3FF -> 0b0000_0011_1111_1111
+    //                   ^^^^^^^^^^^^__ To be sure that the value is 10 bits
     let mut byte_vec: Vec<u16> = Vec::new();
+
+    // 0x10000 -> 0b0001_0000_0000_0000_0000
+    // 0xD800 -> 0b1101_1000_0000_0000 (Default high surrogate)
+    //
+    // 0b0001_0000_0000_0000_0001 - 0b0001_0000_0000_0000_0000 = 0b0000_0000_0000_0000_0001
+    // 0b0000_0000_0000_0000_0001 >> 10 = 0b0000_0000_0000_0000_0000
+    // 0b0000_0000_0000_0000_0000 & 0b0000_0011_1111_1111 = 0b0000_0000_0000_0000_0000
+    // 0b0000_0000_0000_0000_0000 + 0b1101_1000_0000_0000 = 0b1101_1000_0000_0000
     let extra = unicode_cp - 0x10000;
-    byte_vec.push((((extra >> 10) & 0x3FF) + 0xD800) as u16);
-    let unicode_cp = 0xDC00 | unicode_cp & 0x3FF;
-    byte_vec.push(unicode_cp as u16);
+    let high_surrogate: u16 = (((extra >> 10) & 0x3FF) + 0xD800) as u16;
+    byte_vec.push(high_surrogate);
+
+    // 0xDC00 -> 0b1101_1100_0000_0000 (Default low surrogate)
+    //
+    // 0b0001_0000_0000_0000_0001 & 0b0000_0011_1111_1111 = 0b0000_0000_0000_0000_0001
+    // 0b0000_0000_0000_0000_0001 | 0b1101_1100_0000_0000 = 0b1101_1100_0000_0001
+    let low_surrogate: u16 = (unicode_cp & 0x3FF | 0xDC00) as u16;
+    byte_vec.push(low_surrogate);
 
     byte_vec
 }
@@ -71,9 +108,9 @@ fn decode_symbol(utf16_cp: &Vec<u16>, i: usize) -> Option<(u32, usize)> {
     if (extra & 0xFC00) == 0xDC00 {
         code_point = (((code_point & 0x3FF) << 10) + (extra & 0x3FF)) + 0x10000;
         return Some((code_point, offset));
-    } else {
-        panic!("Invalid UCS-2 sequence");
     }
+    panic!("Invalid UCS-2 sequence");
+
 }
 
 /// Pretty print the UTF-16 code points in hexadecimal, (binary) and decimal.
