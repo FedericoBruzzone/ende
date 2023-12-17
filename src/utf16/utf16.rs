@@ -110,7 +110,6 @@ fn decode_symbol(utf16_cp: &Vec<u16>, i: usize) -> Option<(u32, usize)> {
         return Some((code_point, offset));
     }
     panic!("Invalid UCS-2 sequence");
-
 }
 
 /// Pretty print the UTF-16 code points in hexadecimal, (binary) and decimal.
