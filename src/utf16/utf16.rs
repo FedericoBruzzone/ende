@@ -55,7 +55,6 @@ A UTF-16 code point is decoded into a unicode code point using the following rul
 /// * If the input unicode code point is invalid.
 fn encode_code_point(unicode_cp: u32) -> Vec<u16> {
     if unicode_cp < 0xFFFF {
-        // unicode_cp: 0x0251 -> 0b0000_0010_0101_0001
         return vec![unicode_cp as u16];
     }
 
@@ -67,10 +66,10 @@ fn encode_code_point(unicode_cp: u32) -> Vec<u16> {
     // 0x10000 -> 0b0001_0000_0000_0000_0000
     // 0xD800 -> 0b1101_1000_0000_0000 (Default high surrogate)
     //
-    // 0b0001_0000_0000_0000_0001 - 0b0001_0000_0000_0000_0000 = 0b0000_0000_0000_0000_0001
-    // 0b0000_0000_0000_0000_0001 >> 10 = 0b0000_0000_0000_0000_0000
-    // 0b0000_0000_0000_0000_0000 & 0b0000_0011_1111_1111 = 0b0000_0000_0000_0000_0000
-    // 0b0000_0000_0000_0000_0000 + 0b1101_1000_0000_0000 = 0b1101_1000_0000_0000
+    // 0b0001_0000_0000_0000_0001 - 0b0001_0000_0000_0000_0000 = 0b0000_0000_0000_0001
+    // 0b0000_0000_0000_0001 >> 10 = 0b0000_0000_0000_0000
+    // 0b0000_0000_0000_0000 & 0b0000_0011_1111_1111 = 0b0000_0000_0000_0000
+    // 0b0000_0000_0000_0000 + 0b1101_1000_0000_0000 = 0b1101_1000_0000_0000
     let extra = unicode_cp - 0x10000;
     let high_surrogate: u16 = (((extra >> 10) & 0x3FF) + 0xD800) as u16;
     byte_vec.push(high_surrogate);
@@ -85,6 +84,20 @@ fn encode_code_point(unicode_cp: u32) -> Vec<u16> {
     byte_vec
 }
 
+/// Decode a UTF-16 code point into a unicode code point.
+///
+/// # Parameters
+/// * `utf16_cp`: [`&Vec<u16>`] - A vector of UTF-16 code points.
+/// * `i`: [`usize`] - The index of the byte to read.
+///
+/// # Returns
+/// A tuple containing the unicode code point and the number of bytes read.
+/// * The unicode code point is the decoded UTF-16 code point.
+/// * The number of bytes read is the number of consumed bytes from the vector of UTF-16 code points.
+///
+/// # Panics
+/// * If the index `i` is out of bounds.
+/// * If the UTF-16 code point is invalid.
 fn decode_symbol(utf16_cp: &Vec<u16>, i: usize) -> Option<(u32, usize)> {
     if i > utf16_cp.len() {
         panic!("Index out of bounds");
@@ -103,10 +116,29 @@ fn decode_symbol(utf16_cp: &Vec<u16>, i: usize) -> Option<(u32, usize)> {
         return Some((code_point as u32, offset));
     }
 
-    let extra = utf16_cp[i + 1] as u32;
+    let high_surrogate = code_point;
+    let low_surrogate = utf16_cp[i + 1] as u32;
     offset += 1;
-    if (extra & 0xFC00) == 0xDC00 {
-        code_point = (((code_point & 0x3FF) << 10) + (extra & 0x3FF)) + 0x10000;
+    if (low_surrogate & 0xFC00) == 0xDC00 {
+        // utf16_cp: 0xD800, 0xDC01 -> 0b1101_1000_0000_0000, 0b1101_1100_0000_0001
+        // 0xFC00 -> 0b1111_1100_0000_0000
+        //             ^^^^^^^______________ In order to compare (keep) the first 6 bits
+        // 0xDC00 -> 0b1101_1100_0000_0000
+        //             ^^^^^^^______________ The start of the low surrogate
+        // 0x3FF -> 0b0000_0011_1111_1111
+        //                   ^^^^^^^^^^^^__ To be sure that the value is 10 bits
+        // 0x10000 -> 0b0001_0000_0000_0000_0000
+        //
+        // 0b1101_1000_0000_0000 & 0b0000_0011_1111_1111 = 0b0000_0000_0000_0000
+        // 0b0000_0000_0000_0000 << 10 = 0b0000_0000_0000_0000_0000
+        //
+        // 0b1101_1100_0000_0001 & 0b0000_0011_1111_1111 = 0b0000_0000_0000_0001
+        //
+        //      0b0000_0000_0000_0000 +
+        //      0b0000_0000_0000_0001 +
+        // 0b0001_0000_0000_0000_0000 =
+        // 0b0001_0000_0000_0000_0001
+        code_point = (((high_surrogate & 0x3FF) << 10) + (low_surrogate & 0x3FF)) + 0x10000;
         return Some((code_point, offset));
     }
     panic!("Invalid UCS-2 sequence");

@@ -78,7 +78,6 @@ use crate::unicode;
 /// * If the input unicode code point is invalid.
 fn encode_code_point(unicode_cp: u32) -> Vec<u8> {
     if (unicode_cp & 0xFFFFFF80) == 0 {
-        // unicode_cp: 0x24 -> 0b0000_0000_0010_0100
         return vec![unicode_cp as u8];
     }
 
@@ -173,7 +172,7 @@ fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
 /// Decode a UTF-8 code point into a unicode code point.
 ///
 /// # Parameters
-/// * `byte_vec`: [`&Vec<u8>`] - A vector of UTF-8 code points.
+/// * `utf8_cp`: [`&Vec<u8>`] - A vector of UTF-8 code points.
 /// * `i`: [`usize`] - The index of the byte to read. It should be the index of a prefix byte.
 ///
 /// # Returns
@@ -183,8 +182,8 @@ fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
 ///
 /// # Panics
 /// * If the index `i` is out of bounds.
-/// * If the byte at index `i` is not a prefix byte.
 /// * If, after reading the first byte, the continuation bytes are not valid.
+/// * If the UTF-8 code point is invalid.
 fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     if i > utf8_cp.len() {
         panic!("Index out of bounds");
@@ -201,13 +200,11 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     code_point = byte1;
     offset += 1;
     if (byte1 & 0x80) == 0 {
-        // utf8_cp: [0x24] -> [0b0010_0100]
-        // byte1: 0x24 -> 0b0010_0100
         return Some((code_point, offset));
     }
 
     if (byte1 & 0xE0) == 0xC0 {
-        // utf8_cp: [0xD0, 0x98] -> [0b1101_0000, 0b1001_1000]
+        // utf8_cp: 0xD0, 0x98 -> 0b1101_0000, 0b1001_1000
         // 0xE0 -> 0b1110_0000
         //           ^^^^_______ In order to compare (keep) the first three bits
         // 0xC0 -> 0b1100_0000
@@ -234,7 +231,7 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     }
 
     if (byte1 & 0xF0) == 0xE0 {
-        // utf8_cp: [0xE2, 0x82, 0xAC] -> [0b1110_0010, 0b1000_0010, 0b1010_1100]
+        // utf8_cp: 0xE2, 0x82, 0xAC -> 0b1110_0010, 0b1000_0010, 0b1010_1100
         // 0xF0 -> 0b1111_0000
         //           ^^^^^______ In order to compare (keep) the first four bits
         // 0xE0 -> 0b1110_0000
@@ -269,7 +266,7 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     }
 
     if (byte1 & 0xF8) == 0xF0 {
-        // utf8_cp: [0xF0, 0x10, 0xD, 0x8] -> [0b1111_0000, 0b0001_0000, 0b0000_1101, 0b0000_1000]
+        // utf8_cp: 0xF0, 0x10, 0xD, 0x8 -> 0b1111_0000, 0b0001_0000, 0b0000_1101, 0b0000_1000
         // 0xF8 -> 0b1111_1000
         //           ^^^^^^_____ In order to compare (keep) the first five bits
         //
