@@ -9,7 +9,7 @@ A unicode code point is represented using one to four bytes in UTF-8, depending 
 * If the unicode code point is in the range `0x10000` to `0x10FFFF`, it is represented using [four bytes](#four-bytes).
 
 # Decoding
-A UTF-8 code point is decoded into a unicode code point using the following rules.
+A UTF-8 code point is decoded into a unicode code point using the following rules:
 * If the first bit of the UTF-8 code point is 0, the unicode code point is represented using [one byte](#one-byte).
 * If the first three bits of the UTF-8 code point are 110, the unicode code point is represented using [two bytes](#two-bytes).
 * If the first four bits of the UTF-8 code point are 1110, the unicode code point is represented using [three bytes](#three-bytes).
