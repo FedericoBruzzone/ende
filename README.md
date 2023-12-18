@@ -30,6 +30,30 @@ Dec: [66376]
 ----------------------------------------------
 ```
 
+**Encoding/decoding unicode/UTF-16 code points**
+
+```rust
+let v: Vec<u32> = vec![0x10001 /*...*/]; // Array of code points in unicode
+let utf16_vec: Vec<u16> = utf16::encode_in_utf16(&v);
+utf16::print_utf16_b(&utf16_vec);
+let unicode_vec: Vec<u32> = utf16::decode_from_utf16(&utf16_vec);
+unicode::print_unicode_b(&v);
+```
+
+```shell
+--------------- UTF-16 of "𐀁" ---------------
+Hex: [d800, dc01]
+Bin: ["1101100000000000", "1101110000000001"]
+Dec: [55296, 56321]
+---------------------------------------------
+
+--------------- UNICODE of "𐀁" ---------------
+Hex: [10001]
+Bin: ["10000000000000001"]
+Dec: [65537]
+----------------------------------------------
+```
+
 ## Contributing
 
 Contributions to this project are welcome! If you have any suggestions, improvements, or bug fixes, feel free to submit a pull request.

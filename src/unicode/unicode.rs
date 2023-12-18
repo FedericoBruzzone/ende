@@ -1,3 +1,13 @@
+/*!
+Unicode utilities.
+
+# Introduction
+
+Unicode, formally The Unicode Standard, is a text encoding standard maintained by the Unicode Consortium designed to support the use of text written in all of the world's major writing systems.
+
+Unicode text is processed and stored as binary data using one of several encodings, which define how to translate the standard's abstracted codes for characters into sequences of bytes. The Unicode Standard itself defines three encodings: UTF-8, UTF-16, and UTF-32, though several others exist. Of these, UTF-8 is the most widely used by a large margin, in part due to its backwards-compatibility with ASCII.
+*/
+
 use crate::utf8;
 
 /// Pretty print the unicode code points in hexadecimal, (binary) and decimal of a vector of unicode code points.
