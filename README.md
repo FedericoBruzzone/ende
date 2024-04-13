@@ -1,8 +1,21 @@
+[crates-io]: https://crates.io/crates/encdec
+[crates-io-shield]: https://img.shields.io/crates/v/encdec
+<!-- [github-ci-linux]: https://github.com/FedericoBruzzone/tgt/actions/workflows/build-linux.yml -->
+<!-- [github-ci-linux-shield]: https://github.com/FedericoBruzzone/tgt/actions/workflows/build-linux.yml/badge.svg -->
+<!-- [github-ci-windows]: https://github.com/FedericoBruzzone/tgt/actions/workflows/build-windows.yml -->
+<!-- [github-ci-windows-shield]: https://github.com/FedericoBruzzone/tgt/actions/workflows/build-windows.yml/badge.svg -->
+<!-- [github-ci-macos]: https://github.com/FedericoBruzzone/tgt/actions/workflows/build-macos.yml -->
+<!-- [github-ci-macos-shield]: https://github.com/FedericoBruzzone/tgt/actions/workflows/build-macos.yml/badge.svg -->
+[github-license]: https://github.com/FedericoBruzzone/encdec/blob/main/LICENSE
+[github-license-shield]: https://img.shields.io/github/license/FedericoBruzzone/encdec
+[total-lines]: https://github.com/FedericoBruzzone/encdec
+[total-lines-shield]: https://tokei.rs/b1/github/FedericoBruzzone/encdec?type=Rust,Python
+[creates-io-downloads]: https://crates.io/crates/encdec
+[creates-io-downloads-shield]: https://img.shields.io/crates/d/encdec.svg
+
 # Encdec
 
-A library for encoding/decoding unicode/utf-8/ucs-2(utf-16) code points.
-
-This crate is working in progress, the goal is to be able to have different types of encoding and decoding from and to different types of code points.
+A library for encoding/decoding unicode/utf-8/utf-16(ucs-2) code points.
 
 ## Examples
 
