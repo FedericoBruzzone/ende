@@ -353,7 +353,7 @@ fn print_utf8_vec<T: AsRef<Vec<u8>>>(utf8_cp: T, binary_flag: bool) {
 /// ```rust
 /// use encdec::prelude::*;
 /// let v: Vec<u8> = vec![0xf0, 0x90, 0x80, 0x81];
-/// utf8::print_utf8(&v);
+/// print_utf8(&v);
 /// ```
 /// **Output**
 /// ```text
@@ -377,7 +377,7 @@ pub fn print_utf8<T: AsRef<Vec<u8>>>(uft8_cp: T) {
 /// ```rust
 /// use encdec::prelude::*;
 /// let v: Vec<u8> = vec![0xf0, 0x90, 0x80, 0x81];
-/// utf8::print_utf8_b(&v);
+/// print_utf8_b(&v);
 /// ```
 /// **Output**
 /// ```text
@@ -405,7 +405,7 @@ pub fn print_utf8_b<T: AsRef<Vec<u8>>>(uft8_cp: T) {
 /// ```rust
 /// use encdec::prelude::*;
 /// let v: Vec<u32> = vec![0x10001]; // Array of code points in unicode
-/// let enc: Vec<u8> = utf8::encode_in_utf8(&v);
+/// let enc: Vec<u8> = encode_in_utf8(&v);
 /// assert_eq!(enc, vec![0xf0, 0x90, 0x80, 0x81]);
 /// ```
 pub fn encode_in_utf8<T: AsRef<Vec<u32>>>(unicode_cp: T) -> Vec<u8> {
@@ -434,7 +434,7 @@ pub fn encode_in_utf8<T: AsRef<Vec<u32>>>(unicode_cp: T) -> Vec<u8> {
 /// ```rust
 /// use encdec::prelude::*;
 /// let v: Vec<u8> = vec![0xf0, 0x90, 0x80, 0x81]; // Array of code points in UTF-8
-/// let dec: Vec<u32> = utf8::decode_from_utf8(&v);
+/// let dec: Vec<u32> = decode_from_utf8(&v);
 /// assert_eq!(dec, vec![0x10001]);
 /// ```
 pub fn decode_from_utf8<T: AsRef<Vec<u8>>>(utf8_cp: T) -> Vec<u32> {

@@ -72,7 +72,7 @@ pub fn check_code_point(code_point: u32) {
 /// ```rust
 /// use encdec::prelude::*;
 /// let v: Vec<u32> = vec![0x10001];
-/// unicode::print_unicode_b(&v);
+/// print_unicode_b(&v);
 /// ```
 /// **Output**
 /// ```text
@@ -98,7 +98,7 @@ pub fn print_unicode_b<T: AsRef<Vec<u32>>>(unicode_cp: T) {
 /// ```rust
 /// use encdec::prelude::*;
 /// let v: Vec<u32> = vec![0x10001];
-/// unicode::print_unicode(&v);
+/// print_unicode(&v);
 /// ```
 /// **Output**
 /// ```text
