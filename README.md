@@ -81,15 +81,40 @@ Dec: [65537]
 ----------------------------------------------
 ```
 
+## Building
+
+You can use `just`, `make` or `cargo`,  as build tools.
+If you want to use `cargo`, please make sure to read the `Justfile` or the `Makefile` to understand the flags used for each command.
+Here are the available commands:
+
+```text
+just COMMAND
+make COMMAND
+
+COMMAND:
+  all    # fmt, clippy, test, build
+  build  # Build the project
+  run    # Run the project
+  fmt    # Format the code
+  clippy # Run clippy
+  test   # Run the tests
+  clean  # Clean the project
+  help   # Print the help message
+```
+
 ## Contributing
 
 Contributions to this project are welcome! If you have any suggestions, improvements, or bug fixes, feel free to submit a pull request.
 
 ## License
 
-This repository is licensed under the [GNU General Public License (GPL)](https://www.gnu.org/licenses/gpl-3.0.html). Please review the license file provided in the repository for more information regarding the terms and conditions of the GPL license.
+This repository is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). Please review the license file provided in the repository for more information regarding the terms and conditions of the license.
 
 ## Contact
 
-- Email: [federico.bruzzone.i@gmail.com] or [federico.bruzzone@studenti.unimi.it]
+- Email:
+  - [federico.bruzzone.i@gmail.com]
+  - [federico.bruzzone@studenti.unimi.it]
+- GitHub:
+  - [FedericoBruzzone](https://github.com/FedericoBruzzone)
 
