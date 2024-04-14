@@ -1,0 +1,56 @@
+name: Build macOS
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - 'rustfmt.toml'
+      - 'config/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - 'rustfmt.toml'
+      - 'config/**'
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  TDLIB_VERSION: 2589c3fd46925f5d57e4ec79233cd1bd0f5d0c09
+  API_HASH: a3406de8d171bb422bb6ddf3bbd800e2
+  API_ID: 94575
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy, rustfmt
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: Run cargo build
+        run: cargo build --verbose
+      - name: Run cargo test
+        run: cargo test --verbose -- --nocapture --test-threads=1
+      - name: Run cargo clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run cargo fmt
+        run: cargo +nightly fmt --all -- --check
