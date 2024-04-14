@@ -139,7 +139,7 @@ fn encode_code_point(unicode_cp: u32) -> Vec<u8> {
 /// Read the next byte from a vector of UTF-8 code points.
 ///
 /// # Parameters
-/// * `byte_vec`: [`&Vec<u8>`] - A vector of UTF-8 code points.
+/// * `byte_vec`: [`&[u8]`] - A slice of UTF-8 code points.
 /// * `i`: [`usize`] - The index of the byte to read.
 ///
 /// # Returns
@@ -148,7 +148,7 @@ fn encode_code_point(unicode_cp: u32) -> Vec<u8> {
 /// # Panics
 /// * If the index `i` is out of bounds.
 /// * If the byte at index `i` is not a continuation byte.
-fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
+fn read_next_byte(byte_vec: &[u8], i: usize) -> u32 {
     if i >= byte_vec.len() {
         panic!("Index out of bounds");
     }
@@ -173,7 +173,7 @@ fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
 /// Decode a UTF-8 code point into a unicode code point.
 ///
 /// # Parameters
-/// * `utf8_cp`: [`&Vec<u8>`] - A vector of UTF-8 code points.
+/// * `utf8_cp`: [`&[u8]`] - A slice of UTF-8 code points.
 /// * `i`: [`usize`] - The index of the byte to read. It should be the index of a prefix byte.
 ///
 /// # Returns
@@ -185,7 +185,7 @@ fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
 /// * If the index `i` is out of bounds.
 /// * If, after reading the first byte, the continuation bytes are not valid.
 /// * If the UTF-8 code point is invalid.
-fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
+fn decode_symbol(utf8_cp: &[u8], i: usize) -> Option<(u32, usize)> {
     if i > utf8_cp.len() {
         panic!("Index out of bounds");
     }

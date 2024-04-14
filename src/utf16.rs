@@ -87,7 +87,7 @@ fn encode_code_point(unicode_cp: u32) -> Vec<u16> {
 /// Decode a UTF-16 code point into a unicode code point.
 ///
 /// # Parameters
-/// * `utf16_cp`: [`&Vec<u16>`] - A vector of UTF-16 code points.
+/// * `utf16_cp`: [`&[u16]`] - A slice of UTF-16 code points.
 /// * `i`: [`usize`] - The index of the byte to read.
 ///
 /// # Returns
@@ -98,7 +98,7 @@ fn encode_code_point(unicode_cp: u32) -> Vec<u16> {
 /// # Panics
 /// * If the index `i` is out of bounds.
 /// * If the UTF-16 code point is invalid.
-fn decode_symbol(utf16_cp: &Vec<u16>, i: usize) -> Option<(u32, usize)> {
+fn decode_symbol(utf16_cp: &[u16], i: usize) -> Option<(u32, usize)> {
     if i > utf16_cp.len() {
         panic!("Index out of bounds");
     }
