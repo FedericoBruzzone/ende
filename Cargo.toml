@@ -7,7 +7,7 @@ repository = "https://github.com/FedericoBruzzone/encdec"
 homepage = "https://github.com/FedericoBruzzone/encdec"
 license = "GPL-3.0"
 readme = "README.md"
-keywords = ["encode", "decode", "hex", "utf8", "utf16", "unicode"]
+keywords = ["encode", "decode", "utf8", "utf16", "unicode"]
 categories = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
