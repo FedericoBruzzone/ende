@@ -112,8 +112,8 @@ fn decode_symbol(utf16_cp: &Vec<u16>, i: usize) -> Option<(u32, usize)> {
 
     code_point = utf16_cp[i] as u32;
     offset += 1;
-    if code_point < 0xD800 || code_point > 0xDBFF {
-        return Some((code_point as u32, offset));
+    if !(0xD800..=0xDBFF).contains(&code_point) {
+        return Some((code_point, offset));
     }
 
     let high_surrogate = code_point;
@@ -249,9 +249,8 @@ pub fn encode_in_utf16<T: AsRef<Vec<u32>>>(unicode_cp: T) -> Vec<u16> {
     let unicode_cp: Vec<u32> = unicode_cp.as_ref().to_vec();
     let len: usize = unicode_cp.len();
     let mut utf16_cp: Vec<u16> = Vec::new();
-    for i in 0..len {
-        let cp = unicode_cp[i];
-        utf16_cp.append(&mut encode_code_point(cp));
+    for cp in unicode_cp.iter().take(len) {
+        utf16_cp.append(&mut encode_code_point(*cp));
     }
     utf16_cp
 }

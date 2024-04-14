@@ -152,6 +152,7 @@ fn read_next_byte(byte_vec: &Vec<u8>, i: usize) -> u32 {
     if i >= byte_vec.len() {
         panic!("Index out of bounds");
     }
+    #[allow(clippy::identity_op)]
     let continuation_byte: u8 = byte_vec[i] & 0xFF;
     // continuation_byte: 0b1011_1111
     // 0xC0 -> 0b1100_0000
@@ -196,6 +197,7 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
     let mut code_point: u32;
     let mut offset: usize = 0;
 
+    #[allow(clippy::identity_op)]
     let byte1: u32 = (utf8_cp[i] & 0xFF) as u32;
     code_point = byte1;
     offset += 1;
@@ -297,7 +299,7 @@ fn decode_symbol(utf8_cp: &Vec<u8>, i: usize) -> Option<(u32, usize)> {
         let byte4: u32 = read_next_byte(utf8_cp, i + offset);
         offset += 1;
         code_point = ((byte1 & 0x07) << 18) | (byte2 << 12) | (byte3 << 6) | byte4;
-        if code_point >= 0x010000 && code_point <= 0x10FFFF {
+        if (0x010000..=0x10FFFF).contains(&code_point) {
             return Some((code_point, offset));
         }
     }
@@ -410,9 +412,8 @@ pub fn encode_in_utf8<T: AsRef<Vec<u32>>>(unicode_cp: T) -> Vec<u8> {
     let unicode_cp: Vec<u32> = unicode_cp.as_ref().to_vec();
     let len: usize = unicode_cp.len();
     let mut utf8_cp: Vec<u8> = Vec::new();
-    for i in 0..len {
-        let cp: u32 = unicode_cp[i];
-        utf8_cp.append(&mut encode_code_point(cp));
+    for cp in unicode_cp.iter().take(len) {
+        utf8_cp.append(&mut encode_code_point(*cp));
     }
     utf8_cp
 }
@@ -442,7 +443,7 @@ pub fn decode_from_utf8<T: AsRef<Vec<u8>>>(utf8_cp: T) -> Vec<u32> {
     let mut i: usize = 0;
     let mut unicode_cp: Vec<u32> = Vec::new();
     while i < len {
-        let (cp, offset) = decode_symbol(&utf8_cp, i).unwrap();
+        let (cp, offset) = decode_symbol(utf8_cp, i).unwrap();
         i += offset;
         unicode_cp.push(cp);
     }

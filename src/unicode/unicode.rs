@@ -55,8 +55,8 @@ fn print_unicode_vec<T: AsRef<Vec<u32>>>(unicode_cp: T, binary_flag: bool) {
 /// # Panics
 /// * If the input unicode code point is in the range `0xD800` to `0xDFFF`.
 pub fn check_code_point(code_point: u32) {
-    if code_point >= 0xD800 && code_point <= 0xDFFF {
-        panic!("Invalid UCS-2 sequence {}", code_point.to_string());
+    if (0xD800..=0xDFFF).contains(&code_point) {
+        panic!("Invalid UCS-2 sequence {}", code_point);
     }
 }
 

@@ -126,8 +126,8 @@ pub fn print_ucs2_b<T: AsRef<Vec<u16>>>(ucs2_cp: T) {
 pub fn encode_in_ucs2<T: AsRef<Vec<u32>>>(unicode_cp: T) -> Vec<u16> {
     let mut new_v: Vec<u16> = Vec::new();
     let v: Vec<u32> = unicode_cp.as_ref().to_vec();
-    for i in 0..v.len() {
-        let code_point = v[i];
+    for i in &v {
+        let code_point = *i;
         if code_point > 0xFFFF {
             panic!("Invalid UCS-2 sequence");
         }
@@ -160,7 +160,7 @@ pub fn decode_from_ucs2<T: AsRef<Vec<u16>>>(ucs2_cp: T) -> Vec<u32> {
     let mut i = 0;
     while i < v.len() {
         let code_point = v[i];
-        if code_point >= 0xD800 && code_point <= 0xDBFF {
+        if (0xD800..=0xDBFF).contains(&code_point) {
             panic!("Invalid UCS-2 sequence");
         }
         new_v.push(code_point as u32);
