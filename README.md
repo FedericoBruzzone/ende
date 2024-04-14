@@ -36,7 +36,7 @@ A library for encoding/decoding unicode/utf-8/utf-16(ucs-2) code points.
 **Encoding/decoding unicode/UTF-8 code points**
 
 ```rust
-let v: Vec<u32> = vec![0x10348 /*...*/]; // Array of code points in unicode
+let v: Vec<u32> = vec![0x10348 /*...*/]; // Array of unicode code points
 let utf8_vec: Vec<u8> = utf8::encode_in_utf8(&v);
 utf8::print_utf8_b(&utf8_vec);
 let unicode_vec: Vec<u32> = utf8::decode_from_utf8(&utf8_vec);
@@ -60,7 +60,7 @@ Dec: [66376]
 **Encoding/decoding unicode/UTF-16 code points**
 
 ```rust
-let v: Vec<u32> = vec![0x10001 /*...*/]; // Array of code points in unicode
+let v: Vec<u32> = vec![0x10001 /*...*/]; // Array of unicode code points
 let utf16_vec: Vec<u16> = utf16::encode_in_utf16(&v);
 utf16::print_utf16_b(&utf16_vec);
 let unicode_vec: Vec<u32> = utf16::decode_from_utf16(&utf16_vec);
